@@ -1,0 +1,57 @@
+# Configuración de El Perrón - bot de scalping BTC (paper trading)
+
+symbol: BTCUSDT
+interval: 1m            # velas base para scalping
+trend_interval: 5m      # velas para el filtro de tendencia
+
+data:
+  base_url: https://api.binance.com      # alternativas: https://data-api.binance.vision , https://api.binance.us
+  dir: data
+
+capital:
+  initial: 10000.0      # USDT ficticios
+
+fees:
+  taker_pct: 0.04       # % por lado (Binance futuros taker). Spot sería 0.10
+  slippage_pct: 0.01    # % de deslizamiento asumido por lado
+
+strategy:
+  ema_fast: 9
+  ema_slow: 21
+  ema_trend: 50         # sobre velas de tendencia (5m)
+  rsi_period: 7
+  rsi_oversold: 35
+  rsi_overbought: 65
+  atr_period: 14
+  volume_ma: 20
+  volume_min_ratio: 1.2 # volumen de la vela >= 1.2x su media
+  atr_min_pct: 0.03     # ATR mínimo en % del precio (evita mercado muerto)
+  atr_max_pct: 0.40     # ATR máximo en % del precio (evita caos)
+  tp_atr: 1.5           # take profit en múltiplos de ATR
+  sl_atr: 1.0           # stop loss en múltiplos de ATR
+  max_bars_in_trade: 15 # salida por tiempo
+  use_vwap_filter: true
+
+risk:
+  risk_per_trade_pct: 0.5   # % del capital arriesgado por operación
+  max_position_pct: 50.0    # tamaño máximo de posición en % del capital
+  max_daily_loss_pct: 2.0   # se detiene el día al perder esto
+  max_trades_per_day: 30
+  cooldown_bars_after_loss: 5
+
+llm:
+  enabled: false            # también se activa con --llm en la CLI
+  model: claude-opus-5-5
+  effort: low               # low|medium|high - low es suficiente para decisiones rápidas
+  max_calls_per_run: 200    # tope de llamadas por backtest (control de costo)
+  context_bars: 30          # velas recientes que ve el modelo
+  knowledge_dir: knowledge  # tus ideas de trading en .md
+  memory_dir: memory        # lecciones aprendidas y journal
+  cache: true               # cachea decisiones por contexto para no pagar dos veces lo mismo
+  size_multiplier_bounds: [0.0, 1.5]
+  sl_multiplier_bounds: [0.7, 1.5]
+  tp_multiplier_bounds: [0.7, 2.0]
+
+paper:
+  poll_seconds: 10
+  log_dir: memory

@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+data/*.csv
+memory/journal*.csv
+memory/journal*.jsonl
+memory/llm_cache.json
+.pytest_cache/
+memory/last_backtest_metrics.json
+memory/last_equity_curve.csv
+memory/paper_state.json
+memory/proposals.json
