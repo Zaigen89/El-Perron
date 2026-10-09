@@ -4,8 +4,7 @@ __pycache__/
 venv/
 .env
 data/*.csv
-memory/journal*.csv
-memory/journal*.jsonl
+memory/*_journal.jsonl
 memory/llm_cache.json
 .pytest_cache/
 memory/last_backtest_metrics.json
