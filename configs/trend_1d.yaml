@@ -9,9 +9,9 @@ strategy:
   name: trend_follow_v4
   donchian_entry: 20      # 20 días
   donchian_exit: 10
-  trail_atr: 3.0
+  trail_atr: 4.0
   initial_stop_atr: 2.0
-  long_only: false
+  long_only: true       # el barrido IS/OOS favorece solo largos en BTC; los cortos aportan poco y sufren en alcistas
   regime_ema: 100         # ~ media de 100 días
   atr_period: 14
   atr_min_pct: 0.5

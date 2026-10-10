@@ -52,6 +52,7 @@ python -m perron review
 python -m perron review --apply          # aplica las propuestas a config.yaml
 
 # 6. Paper trading en vivo con precios de Binance (Ctrl+C para parar; reanuda donde quedó)
+python -m perron --config configs/trend_4h.yaml paper          # la candidata validada
 python -m perron paper --llm
 python -m perron paper --llm --minutes 120
 python -m perron review --journal paper_journal.jsonl
@@ -104,8 +105,8 @@ Entrada siempre en la apertura de la vela siguiente a la señal. Si en una vela 
 asume el stop (conservador).
 
 **`trend_follow_v4`.** Seguimiento de tendencia en 4 horas o diario (`configs/trend_4h.yaml`, `configs/trend_1d.yaml`).
-Entrada al cerrar sobre el máximo de 20 velas con filtro de régimen (EMA100), stop inicial de 2 ATR, stop móvil a
-3 ATR del máximo alcanzado, salida al cerrar bajo el mínimo de 10 velas. Sin objetivo fijo: se deja correr la tendencia.
+Entrada al cerrar sobre el máximo de 20 velas con filtro de régimen (EMA100), solo largos, stop inicial de 2 ATR,
+stop móvil a 4 ATR del máximo alcanzado, salida al cerrar bajo el mínimo de 10 velas. Sin objetivo fijo: se deja correr la tendencia.
 Motivo: el estudio de eventos sobre 180 días de 15m mostró que a horizontes de minutos a pocas horas ninguna señal
 simple predice el precio de BTC; la única fuente de retorno observable es la deriva de tendencias de días y semanas,
 donde además las comisiones dejan de importar (ATR de 1% a 3% contra 0.1% de costo). Requiere años de datos:
@@ -116,6 +117,18 @@ python -m perron fetch --interval 1d --days 3000
 python -m perron --config configs/trend_4h.yaml backtest --oos-days 365
 python -m perron --config configs/trend_1d.yaml backtest --oos-days 365
 ```
+
+**Resultados con años de datos reales de Binance (riesgo 1% por operación, comisiones 0.04% + slippage 0.01% por lado):**
+
+| | Periodo | Operaciones | Retorno | Drawdown máx. | Profit factor | Fuera de muestra (último año) | Comprar y mantener |
+|---|---|---|---|---|---|---|---|
+| 4h | 2021-04 a 2026-10 | 157 | +106% | -8.2% | 1.82 | +6.9%, PF 1.35 | +44%, drawdown -77% |
+| 1d | 2018-07 a 2026-10 | 41 | +87% | -3.7% | 3.87 | -2.7%, 11 operaciones (muestra chica) | +912%, drawdown -77% |
+
+En 4h, 38 de 72 combinaciones del barrido son positivas dentro y fuera de muestra; en diario, 65 de 72.
+La ventaja es estructural (seguir tendencias en BTC), no de un parámetro afinado. En 2022, año bajista con
+buy&hold en -65%, la versión 4h perdió 4.8%. El retorno escala con `risk_per_trade_pct`; lo que importa es
+retorno/drawdown (13x en 4h contra 0.6x de comprar y mantener). Las versiones intradía (v2, v3) no tienen ventaja.
 
 ### Validar sin engañarse
 

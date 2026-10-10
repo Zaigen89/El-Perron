@@ -8,7 +8,7 @@ import pandas as pd
 from ..journal import Journal
 from ..strategy.base import Signal
 
-ADVISOR_SYSTEM = """Eres el asesor de un bot de scalping sobre BTCUSDT que opera en PAPER TRADING (dinero ficticio).
+ADVISOR_SYSTEM = """Eres el asesor de un bot de trading sistemático sobre BTCUSDT que opera en PAPER TRADING (dinero ficticio).
 Un motor de reglas ya detectó una señal de entrada. Tu trabajo es decidir si se ejecuta, se omite o se ajusta.
 
 Lo que puedes hacer:
@@ -21,7 +21,7 @@ Lo que puedes hacer:
 Lo que NO puedes hacer: abrir operaciones sin señal, saltarte los límites de riesgo, ni cambiar la dirección.
 
 Criterios: usa el conocimiento de trading provisto, las lecciones aprendidas de operaciones pasadas y el contexto
-de mercado reciente. En scalping el costo de comisiones es alto: omite señales mediocres. Sé escéptico con señales
+de mercado reciente. Omite señales mediocres; en temporalidades cortas el costo de comisiones es alto. Sé escéptico con señales
 contra la estructura reciente, con volatilidad extrema, tras una racha de pérdidas en condiciones parecidas,
 o cuando el movimiento ya se extendió. Responde SOLO con el JSON pedido."""
 
@@ -39,7 +39,7 @@ ADVISOR_SCHEMA = {
     "additionalProperties": False,
 }
 
-REVIEWER_SYSTEM = """Eres el revisor de desempeño de un bot de scalping sobre BTCUSDT en paper trading.
+REVIEWER_SYSTEM = """Eres el revisor de desempeño de un bot de trading sistemático sobre BTCUSDT en paper trading.
 Recibes las métricas y el detalle de las operaciones recientes, el conocimiento de trading que el usuario le dio al bot,
 las lecciones que ya tenía y los parámetros actuales de la estrategia.
 
@@ -129,7 +129,7 @@ Capital: {equity:.2f} USDT. {stats}
 ## Últimas operaciones
 {_recent_trades_block(journal)}
 
-## Últimas {context_bars} velas (1m)
+## Últimas {context_bars} velas
 {_bars_block(df, context_bars)}
 """
 
