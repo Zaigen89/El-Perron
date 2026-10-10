@@ -33,18 +33,21 @@ python -m perron fetch --days 30
 #    Sin conexión a Binance puedes probar el flujo con datos sintéticos (NO sirven para validar nada):
 python -m perron synth --days 10
 
-# 2. Backtest solo con reglas:
+# 2. Diagnóstico: ¿hay volatilidad suficiente para pagar comisiones? ¿qué temporalidad conviene?
+python -m perron diagnose
+
+# 3. Backtest solo con reglas:
 python -m perron backtest
 python -m perron backtest --last-days 7 --verbose
 
-# 3. Backtest con el asesor Claude (cada señal se consulta; las decisiones se cachean):
+# 4. Backtest con el asesor Claude (cada señal se consulta; las decisiones se cachean):
 python -m perron backtest --llm
 
-# 4. Revisión: Claude lee el journal, escribe memory/lessons.md y propone parámetros
+# 5. Revisión: Claude lee el journal, escribe memory/lessons.md y propone parámetros
 python -m perron review
 python -m perron review --apply          # aplica las propuestas a config.yaml
 
-# 5. Paper trading en vivo con precios de Binance (Ctrl+C para parar; reanuda donde quedó)
+# 6. Paper trading en vivo con precios de Binance (Ctrl+C para parar; reanuda donde quedó)
 python -m perron paper --llm
 python -m perron paper --llm --minutes 120
 python -m perron review --journal paper_journal.jsonl

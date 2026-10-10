@@ -102,6 +102,13 @@ def cmd_backtest(args, cfg: Config) -> int:
     return 0
 
 
+def cmd_diagnose(args, cfg: Config) -> int:
+    from .diagnose import diagnose
+    df = _load_data(args, cfg)
+    print(diagnose(df, cfg))
+    return 0
+
+
 def cmd_paper(args, cfg: Config) -> int:
     from .llm import build_advisor
     from .paper import PaperTrader
@@ -172,6 +179,10 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--llm", action="store_true", help="activar el asesor Claude")
     b.add_argument("--verbose", action="store_true")
 
+    d = sub.add_parser("diagnose", help="¿hay volatilidad suficiente para pagar comisiones? embudo de señales")
+    d.add_argument("--data", help="ruta CSV (por defecto data/<symbol>_<interval>.csv)")
+    d.add_argument("--last-days", type=float, default=None)
+
     pp = sub.add_parser("paper", help="paper trading en vivo con precios de Binance")
     pp.add_argument("--llm", action="store_true")
     pp.add_argument("--minutes", type=float, default=None, help="detener tras N minutos")
@@ -182,5 +193,5 @@ def main(argv: list[str] | None = None) -> int:
 
     args = p.parse_args(argv)
     cfg = Config.load(args.config)
-    return {"fetch": cmd_fetch, "synth": cmd_synth, "backtest": cmd_backtest,
+    return {"fetch": cmd_fetch, "synth": cmd_synth, "backtest": cmd_backtest, "diagnose": cmd_diagnose,
             "paper": cmd_paper, "review": cmd_review}[args.cmd](args, cfg)
