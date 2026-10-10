@@ -134,24 +134,29 @@ def cmd_analyze(args, cfg: Config) -> int:
     print(summary(trades, cfg))
     print()
     print(breakdown(trades))
+    if args.yearly or args.benchmark:
+        from .analyze import yearly
+        df = _load_data(args, cfg)
+        print()
+        print(yearly(trades, df, cfg.capital.initial))
     if args.benchmark:
         print()
-        df = _load_data(args, cfg)
         print(random_benchmark(cfg, _strategy(cfg), df, len(trades), seeds=args.seeds))
     return 0
 
 
 def cmd_sweep(args, cfg: Config) -> int:
-    from .backtest.validate import DEFAULT_GRID, format_sweep, sweep
+    from .backtest.validate import format_sweep, grid_for, sweep
     df = _load_data(args, cfg)
+    grid = grid_for(cfg)
     n = 1
-    for v in DEFAULT_GRID.values():
+    for v in grid.values():
         n *= len(v)
     print(f"Barrido de {n} combinaciones de {cfg.strategy.name} con {args.oos_days} días OOS ...")
 
     def progress(i, total, row):
         print(f"  {i}/{total}  is_exp={row['is_exp']:>7}  oos_exp={row['oos_exp']:>7}  "
-              + " ".join(f"{k}={row[k]}" for k in DEFAULT_GRID), flush=True)
+              + " ".join(f"{k}={row[k]}" for k in grid), flush=True)
     table = sweep(cfg, _strategy, df, args.oos_days, progress=progress)
     out = Path(cfg.llm.memory_dir) / "sweep.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -241,6 +246,7 @@ def main(argv: list[str] | None = None) -> int:
     a = sub.add_parser("analyze", help="¿hay ventaja real? bruto vs comisiones, benchmark aleatorio, desglose")
     a.add_argument("--journal", default=None, help="archivo dentro de memory/ (por defecto backtest_journal.jsonl)")
     a.add_argument("--benchmark", action="store_true", help="comparar contra entradas aleatorias (usa los datos del backtest)")
+    a.add_argument("--yearly", action="store_true", help="tabla por año contra comprar y mantener")
     a.add_argument("--seeds", type=int, default=10)
     a.add_argument("--data", help="ruta CSV para el benchmark")
     a.add_argument("--last-days", type=float, default=None)

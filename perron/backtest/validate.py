@@ -58,18 +58,36 @@ def format_walk_forward(wf: dict) -> str:
     return "\n".join(lines)
 
 
-# Rejilla por defecto para value_pullback_v3. Pequeña a propósito: más combinaciones = más sobreajuste.
-DEFAULT_GRID = {
-    "rr": [1.5, 2.0, 3.0],
-    "max_dist_vwap_pct": [0.25, 0.35, 0.6],
-    "min_stop_atr": [1.0, 1.5],
-    "swing_lookback": [3, 6],
+# Rejillas por estrategia. Pequeñas a propósito: más combinaciones = más sobreajuste.
+GRIDS = {
+    "value_pullback_v3": {
+        "rr": [1.5, 2.0, 3.0],
+        "max_dist_vwap_pct": [0.25, 0.35, 0.6],
+        "min_stop_atr": [1.0, 1.5],
+        "swing_lookback": [3, 6],
+    },
+    "trend_follow_v4": {
+        "donchian_entry": [10, 20, 30, 55],
+        "donchian_exit": [5, 10, 20],
+        "trail_atr": [2.0, 3.0, 4.0],
+        "long_only": [False, True],
+    },
+    "scalping_pullback_v2": {
+        "tp_atr": [1.5, 2.0, 3.0],
+        "sl_atr": [1.0, 1.5],
+        "volume_min_ratio": [1.2, 1.5],
+    },
 }
+DEFAULT_GRID = GRIDS["value_pullback_v3"]
+
+
+def grid_for(cfg: Config) -> dict:
+    return GRIDS.get(cfg.strategy.name, DEFAULT_GRID)
 
 
 def sweep(cfg: Config, strategy_factory, df: pd.DataFrame, oos_days: float,
           grid: dict | None = None, progress=None) -> pd.DataFrame:
-    grid = grid or DEFAULT_GRID
+    grid = grid or grid_for(cfg)
     keys = list(grid)
     rows = []
     combos = list(itertools.product(*(grid[k] for k in keys)))

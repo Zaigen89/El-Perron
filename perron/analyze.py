@@ -162,3 +162,33 @@ def random_benchmark(cfg: Config, strategy, df: pd.DataFrame, n_trades_real: int
              "",
              "Si la estrategia real no supera claramente estos números, sus reglas de entrada no aportan ventaja."]
     return "\n".join(lines)
+
+
+def yearly(trades: pd.DataFrame, df: pd.DataFrame, initial_capital: float) -> str:
+    """Rendimiento por año de la estrategia contra comprar y mantener, con drawdown de cada uno."""
+    t = trades.sort_values("exit_time").copy()
+    t["year"] = t["exit_time"].dt.year
+    g = t.groupby("year")["pnl"].agg(n="count", pnl="sum", win_rate=lambda s: (s > 0).mean() * 100).round(1)
+    eq = initial_capital + t.set_index("exit_time")["pnl"].cumsum()
+    rows = []
+    for y in g.index:
+        yr = df.loc[str(y), "close"]
+        bh = (yr.iloc[-1] / yr.iloc[0] - 1) * 100
+        bh_dd = ((yr / yr.cummax()) - 1).min() * 100
+        e = eq.loc[str(y)]
+        start = eq.loc[: f"{y - 1}-12-31"].iloc[-1] if len(eq.loc[: f"{y - 1}-12-31"]) else initial_capital
+        strat = (e.iloc[-1] / start - 1) * 100 if len(e) else 0.0
+        e_full = pd.concat([pd.Series([start], index=[pd.Timestamp(f"{y}-01-01", tz="UTC")]), e])
+        s_dd = ((e_full / e_full.cummax()) - 1).min() * 100
+        rows.append({"year": y, "n": int(g.loc[y, "n"]), "win%": g.loc[y, "win_rate"], "estrategia%": round(strat, 1),
+                     "dd_estrategia%": round(s_dd, 1), "buy_hold%": round(bh, 1), "dd_buy_hold%": round(bh_dd, 1)})
+    out = pd.DataFrame(rows).set_index("year")
+    total_bh = (df["close"].iloc[-1] / df["close"].iloc[0] - 1) * 100
+    total_bh_dd = ((df["close"] / df["close"].cummax()) - 1).min() * 100
+    total_s = (eq.iloc[-1] / initial_capital - 1) * 100
+    total_s_dd = ((eq / eq.cummax()) - 1).min() * 100
+    lines = ["=== Por año: estrategia vs comprar y mantener ===", out.to_string(),
+             f"\nTotal: estrategia {total_s:+.1f}% (dd {total_s_dd:.1f}%) | buy&hold {total_bh:+.1f}% (dd {total_bh_dd:.1f}%)",
+             f"Retorno/drawdown: estrategia {abs(total_s / total_s_dd) if total_s_dd else 0:.1f}x | buy&hold {abs(total_bh / total_bh_dd) if total_bh_dd else 0:.1f}x",
+             "Nota: el retorno de la estrategia escala con risk_per_trade_pct; compara retorno/drawdown, no retorno bruto."]
+    return "\n".join(lines)
