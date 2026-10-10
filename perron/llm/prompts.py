@@ -82,6 +82,8 @@ TUNABLE_PARAMS = {
     "pullback_lookback": (2, 12), "min_body_ratio": (0.2, 0.8),
     "atr_min_pct": (0.01, 0.10), "atr_max_pct": (0.15, 1.0), "tp_atr": (0.8, 3.0),
     "sl_atr": (0.5, 2.0), "max_bars_in_trade": (5, 60), "min_tp_cost_ratio": (1.0, 5.0),
+    "rr": (1.0, 4.0), "swing_lookback": (2, 10), "stop_buffer_atr": (0.0, 1.0), "min_stop_atr": (0.5, 2.0),
+    "max_stop_atr": (1.5, 5.0), "max_dist_vwap_pct": (0.1, 1.0), "rsi_pb_low": (20, 50), "rsi_pb_high": (50, 75),
 }
 
 

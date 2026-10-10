@@ -117,8 +117,13 @@ class RandomStrategy:
             return None
         d = int(row["trend_dir"]) or int(self.rng.choice([-1, 1]))
         price, a = float(row["close"]), float(row["atr"])
-        return Signal(time=df.index[i], direction=d, price=price, stop_loss=price - d * self.cfg.sl_atr * a,
-                      take_profit=price + d * self.cfg.tp_atr * a, atr=a, reasons=["aleatorio"], features={})
+        if self.cfg.name == "value_pullback_v3":
+            stop_dist = max(self.cfg.min_stop_atr, 1.0) * a * 1.3  # ~ stop estructural típico
+            tp_dist = self.cfg.rr * stop_dist
+        else:
+            stop_dist, tp_dist = self.cfg.sl_atr * a, self.cfg.tp_atr * a
+        return Signal(time=df.index[i], direction=d, price=price, stop_loss=price - d * stop_dist,
+                      take_profit=price + d * tp_dist, atr=a, reasons=["aleatorio"], features={})
 
 
 def random_benchmark(cfg: Config, strategy, df: pd.DataFrame, n_trades_real: int, seeds: int = 10) -> str:

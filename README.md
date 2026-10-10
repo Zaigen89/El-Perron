@@ -27,8 +27,8 @@ export ANTHROPIC_API_KEY=sk-ant-...        # Windows (PowerShell): $env:ANTHROPI
 ## Flujo de trabajo
 
 ```bash
-# 1. Datos reales de Binance (público, sin clave). 60 días de velas de 5 minutos:
-python -m perron fetch --days 60
+# 1. Datos reales de Binance (público, sin clave). 180 días de velas de 15 minutos:
+python -m perron fetch --days 180
 
 #    Sin conexión a Binance puedes probar el flujo con datos sintéticos (NO sirven para validar nada):
 python -m perron synth --days 10
@@ -68,7 +68,10 @@ perron/
   data/binance.py    descarga de velas y precio actual (API pública)
   data/synthetic.py  velas inventadas para probar sin red
   features.py        EMA, RSI, ATR, VWAP de sesión, volumen relativo, tendencia 5m sin mirar al futuro
-  strategy/scalping.py  reglas de entrada: pullback a la media + cruce de RSI + vela + volumen + tendencia 5m
+  strategy/value_pullback.py  v3: retroceso a valor en tendencia, stop estructural (por defecto)
+  strategy/scalping.py        v2: ruptura tras retroceso (referencia, sin ventaja en datos reales)
+  backtest/validate.py        validación IS/OOS y barrido de parámetros
+  diagnose.py / analyze.py    volatilidad vs comisiones; ¿hay ventaja o es ruido?
   risk.py            tamaño por riesgo fijo, tope de posición, pérdida diaria máxima, enfriamiento
   backtest/engine.py simulador vela a vela con comisiones, slippage, SL/TP intra-vela y salida por tiempo
   backtest/metrics.py PnL, win rate, profit factor, drawdown, Sharpe, desglose por motivo de salida
@@ -79,24 +82,37 @@ perron/
   journal.py         registro de cada operación (JSONL) con las features de la señal y la decisión del LLM
 ```
 
-### Estrategia inicial (`scalping_pullback_v2`)
+### Estrategias disponibles (`strategy.name` en config.yaml)
 
-Temporalidad base de 5 minutos con filtro de tendencia en 15 minutos. Se eligió con `diagnose`: en velas de
-1 minuto el ATR de BTC (~0.04% del precio) no alcanza a cubrir las comisiones de ida y vuelta (~0.10%).
+**`value_pullback_v3` (por defecto).** Velas de 15 minutos con tendencia en 1 hora. Compra el retroceso a valor
+dentro de la tendencia, no la ruptura. Long (short es espejo):
+1. Tendencia 1h alcista: precio sobre la EMA50 de 1h y esa EMA subiendo (vela 1h anterior cerrada, sin mirar al futuro).
+2. El mínimo de la vela 15m tocó la EMA21 o el VWAP de sesión (tolerancia 0.05%).
+3. La vela rechaza el nivel: cierra por encima de la EMA21 y de su apertura.
+4. No está extendida: cierre a menos de 0.35% del VWAP y RSI(7) entre 35 y 60.
+5. Stop por estructura: debajo del mínimo de las últimas 4 velas menos 0.25 ATR, acotado entre 1 y 3 ATR.
+   Si el retroceso fue más profundo que 3 ATR no se opera.
+6. Objetivo = 2 veces la distancia del stop, y debe cubrir al menos 2x las comisiones. Salida por tiempo a las 3 horas.
 
-Long (short es espejo):
-1. Tendencia 15m alcista: precio sobre la EMA50 de 15m y esa EMA subiendo (se usa la vela 15m anterior cerrada, sin mirar al futuro).
-2. En 5m, EMA9 > EMA21.
-3. Hubo un retroceso en las últimas 5 velas: el RSI(7) bajó de 45 o el precio tocó la EMA9.
-4. Gatillo: la vela cierra sobre la EMA9, rompe el máximo de la vela anterior, es alcista con cuerpo >= 40% de su rango,
-   el RSI ya está de vuelta sobre 45 y el volumen es >= 1.2x su media de 20.
-5. ATR entre 0.05% y 0.60% del precio.
-6. El objetivo (2 ATR) debe ser al menos 2x el costo ida y vuelta. Sin este filtro, las operaciones que llegan al
-   objetivo pierden dinero en neto.
-7. Precio por encima del VWAP de la sesión.
+**`scalping_pullback_v2`.** Velas de 5 minutos, entrada por ruptura del máximo previo tras un retroceso con
+stop de 1 ATR. Se conserva como referencia: en 60 días de datos reales de BTC se comportó igual que entradas
+aleatorias (34.5% de aciertos con objetivo 2:1) y el 45% de sus operaciones murió en la primera vela.
+Es el ejemplo de por qué el stop no puede estar dentro del ruido y por qué no se persiguen rupturas.
 
-Entrada en la apertura de la vela siguiente. Stop = 1 ATR, objetivo = 2 ATR, salida por tiempo a las 12 velas (1 hora).
-Si en una vela se tocan stop y objetivo, se asume el stop (conservador).
+Entrada siempre en la apertura de la vela siguiente a la señal. Si en una vela se tocan stop y objetivo, se
+asume el stop (conservador).
+
+### Validar sin engañarse
+
+```bash
+python -m perron backtest --oos-days 30     # reserva los últimos 30 días: solo se miran al final
+python -m perron sweep --oos-days 30        # barrido de parámetros; cuenta la columna oos_exp, no is_exp
+python -m perron analyze --benchmark        # ¿supera a entradas aleatorias con las mismas salidas?
+```
+
+Regla de oro: los parámetros se eligen mirando solo el tramo dentro de muestra (IS). El tramo fuera de muestra
+(OOS) se mira una vez al final. Si IS gana y OOS pierde, fue sobreajuste. Si ninguna combinación del barrido es
+positiva en ambos tramos, el problema es la idea, no los números.
 
 ### Dónde entra el LLM y dónde no
 
@@ -149,7 +165,7 @@ problema está en el conocimiento que recibe, no en el modelo.
 ## Advertencias honestas
 
 - Los datos sintéticos son ruido con regímenes; cualquier resultado sobre ellos es irrelevante. Usa `fetch`.
-- Un backtest de 60 días de 5 minutos es poca muestra. Mira el `profit_factor` y la expectativa por operación
+- Un backtest de pocos meses es poca muestra. Mira el `profit_factor` y la expectativa por operación
   después de comisiones, no el PnL bruto.
 - Si un parámetro propuesto por el revisor mejora el backtest, pruébalo en un periodo distinto antes de creerlo.
   Lo que mejora el pasado por ajuste fino suele empeorar el futuro.

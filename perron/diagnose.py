@@ -13,9 +13,9 @@ import pandas as pd
 
 from .config import Config
 from .features import add_features, resample_ohlcv
-from .strategy import ScalpingStrategy
+from .strategy import REGISTRY
 
-_RULE = {"1m": "1min", "3m": "3min", "5m": "5min", "15m": "15min", "30m": "30min", "1h": "1h"}
+_RULE = {"1m": "1min", "3m": "3min", "5m": "5min", "15m": "15min", "30m": "30min", "1h": "1h", "4h": "4h"}
 _TREND_FOR = {"1m": "5m", "3m": "15m", "5m": "15m", "15m": "1h", "30m": "2h", "1h": "4h"}
 _MINUTES = {"1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30, "1h": 60}
 
@@ -30,20 +30,22 @@ def _funnel(df: pd.DataFrame, cfg: Config, trend_interval: str, cost_pct: float)
     out["atr_pct_p10"] = float(atr.quantile(0.10))
     out["atr_pct_p50"] = float(atr.quantile(0.50))
     out["atr_pct_p90"] = float(atr.quantile(0.90))
-    out["atr_min_requerido_por_costo"] = c.min_tp_cost_ratio * cost_pct / c.tp_atr
+    tp_mult = c.rr * c.min_stop_atr if c.name == "value_pullback_v3" else c.tp_atr
+    out["atr_min_requerido_por_costo"] = c.min_tp_cost_ratio * cost_pct / tp_mult
     out["pct_velas_atr_en_rango"] = float(((atr >= c.atr_min_pct) & (atr <= c.atr_max_pct)).mean() * 100)
     out["pct_velas_atr_cubre_costo"] = float((atr >= out["atr_min_requerido_por_costo"]).mean() * 100)
     out["pct_velas_volumen_ok"] = float((valid["vol_ratio"] >= c.volume_min_ratio).mean() * 100)
     out["pct_velas_con_tendencia"] = float((valid["trend_dir"] != 0).mean() * 100)
 
-    free = ScalpingStrategy(c, trend_interval, round_trip_cost_pct=0.0)
-    paid = ScalpingStrategy(c, trend_interval, round_trip_cost_pct=cost_pct)
+    cls = REGISTRY[c.name]
+    free = cls(c, trend_interval, round_trip_cost_pct=0.0)
+    paid = cls(c, trend_interval, round_trip_cost_pct=cost_pct)
     n_free = sum(1 for i in range(len(feats)) if free.signal_at(feats, i) is not None)
     n_paid = sum(1 for i in range(len(feats)) if paid.signal_at(feats, i) is not None)
     out["senales_sin_filtro_costo"] = n_free
     out["senales_con_filtro_costo"] = n_paid
     # Sin ningún filtro de ATR: ¿cuántas señales hay por las reglas de precio/volumen solamente?
-    loose = ScalpingStrategy(replace(c, atr_min_pct=0.0, atr_max_pct=100.0), trend_interval, 0.0)
+    loose = cls(replace(c, atr_min_pct=0.0, atr_max_pct=100.0), trend_interval, 0.0)
     out["senales_sin_filtros_atr"] = sum(1 for i in range(len(feats)) if loose.signal_at(feats, i) is not None)
     return out
 
@@ -51,11 +53,13 @@ def _funnel(df: pd.DataFrame, cfg: Config, trend_interval: str, cost_pct: float)
 def diagnose(df: pd.DataFrame, cfg: Config, intervals: list[str] | None = None) -> str:
     base = cfg.interval
     cost_pct = cfg.fees.round_trip_fraction * 100.0
-    intervals = intervals or [base] + [i for i in ["3m", "5m", "15m"] if _MINUTES[i] > _MINUTES[base]]
+    intervals = intervals or [base] + [i for i in ["5m", "15m", "30m", "1h"] if _MINUTES[i] > _MINUTES[base]]
     days = (df.index[-1] - df.index[0]).total_seconds() / 86400.0
-    lines = [f"=== Diagnóstico de {cfg.symbol} | {days:.1f} días | costo ida y vuelta {cost_pct:.3f}% ===",
-             f"Filtro de costo: objetivo ({cfg.strategy.tp_atr} ATR) >= {cfg.strategy.min_tp_cost_ratio}x costo "
-             f"=> ATR% mínimo {cfg.strategy.min_tp_cost_ratio * cost_pct / cfg.strategy.tp_atr:.3f}%", ""]
+    c = cfg.strategy
+    tp_mult = c.rr * c.min_stop_atr if c.name == "value_pullback_v3" else c.tp_atr
+    lines = [f"=== Diagnóstico de {cfg.symbol} | {c.name} | {days:.1f} días | costo ida y vuelta {cost_pct:.3f}% ===",
+             f"Filtro de costo: objetivo mínimo ({tp_mult:g} ATR) >= {c.min_tp_cost_ratio}x costo "
+             f"=> ATR% mínimo {c.min_tp_cost_ratio * cost_pct / tp_mult:.3f}%", ""]
     results = {}
     for iv in intervals:
         d = df if iv == base else resample_ohlcv(df, _RULE[iv])

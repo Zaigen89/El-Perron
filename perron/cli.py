@@ -7,12 +7,11 @@ import sys
 from pathlib import Path
 
 from .config import Config
-from .strategy import ScalpingStrategy
+from .strategy import build_strategy
 
 
-def _strategy(cfg: Config) -> ScalpingStrategy:
-    return ScalpingStrategy(cfg.strategy, cfg.trend_interval,
-                            round_trip_cost_pct=cfg.fees.round_trip_fraction * 100.0)
+def _strategy(cfg: Config):
+    return build_strategy(cfg)
 
 
 def _explain_api_error(exc: Exception) -> str | None:
@@ -78,6 +77,11 @@ def cmd_backtest(args, cfg: Config) -> int:
     from .llm import build_advisor
 
     df = _load_data(args, cfg)
+    if args.oos_days:
+        from .backtest.validate import format_walk_forward, walk_forward
+        print(f"Estrategia {cfg.strategy.name} | {cfg.interval}/{cfg.trend_interval} | {len(df)} velas")
+        print(format_walk_forward(walk_forward(cfg, _strategy, df, args.oos_days)))
+        return 0
     use_llm = args.llm or cfg.llm.enabled
     advisor = build_advisor(cfg, use_llm)
     journal_path = Path(cfg.llm.memory_dir) / "backtest_journal.jsonl"
@@ -85,7 +89,8 @@ def cmd_backtest(args, cfg: Config) -> int:
         journal_path.unlink()
     bt = Backtester(cfg, _strategy(cfg), advisor,
                     Journal(journal_path), verbose=args.verbose)
-    print(f"Backtest sobre {len(df)} velas ({df.index[0]} -> {df.index[-1]}) | LLM {'activo' if advisor else 'desactivado'}")
+    print(f"Backtest {cfg.strategy.name} sobre {len(df)} velas {cfg.interval} ({df.index[0]} -> {df.index[-1]}) | "
+          f"LLM {'activo' if advisor else 'desactivado'}")
     res = bt.run(df)
     if advisor is not None:
         advisor.close()
@@ -132,6 +137,27 @@ def cmd_analyze(args, cfg: Config) -> int:
         print()
         df = _load_data(args, cfg)
         print(random_benchmark(cfg, _strategy(cfg), df, len(trades), seeds=args.seeds))
+    return 0
+
+
+def cmd_sweep(args, cfg: Config) -> int:
+    from .backtest.validate import DEFAULT_GRID, format_sweep, sweep
+    df = _load_data(args, cfg)
+    n = 1
+    for v in DEFAULT_GRID.values():
+        n *= len(v)
+    print(f"Barrido de {n} combinaciones de {cfg.strategy.name} con {args.oos_days} días OOS ...")
+
+    def progress(i, total, row):
+        print(f"  {i}/{total}  is_exp={row['is_exp']:>7}  oos_exp={row['oos_exp']:>7}  "
+              + " ".join(f"{k}={row[k]}" for k in DEFAULT_GRID), flush=True)
+    table = sweep(cfg, _strategy, df, args.oos_days, progress=progress)
+    out = Path(cfg.llm.memory_dir) / "sweep.csv"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    table.to_csv(out, index=False)
+    print()
+    print(format_sweep(table))
+    print(f"\nTabla completa: {out}")
     return 0
 
 
@@ -204,6 +230,7 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--last-days", type=float, default=None, help="usar solo los últimos N días")
     b.add_argument("--llm", action="store_true", help="activar el asesor Claude")
     b.add_argument("--verbose", action="store_true")
+    b.add_argument("--oos-days", type=float, default=0, help="reservar los últimos N días como fuera de muestra")
 
     d = sub.add_parser("diagnose", help="¿hay volatilidad suficiente para pagar comisiones? embudo de señales")
     d.add_argument("--data", help="ruta CSV (por defecto data/<symbol>_<interval>.csv)")
@@ -216,6 +243,11 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--data", help="ruta CSV para el benchmark")
     a.add_argument("--last-days", type=float, default=None)
 
+    sw = sub.add_parser("sweep", help="barrido de parámetros con validación IS/OOS")
+    sw.add_argument("--data")
+    sw.add_argument("--last-days", type=float, default=None)
+    sw.add_argument("--oos-days", type=float, default=30)
+
     pp = sub.add_parser("paper", help="paper trading en vivo con precios de Binance")
     pp.add_argument("--llm", action="store_true")
     pp.add_argument("--minutes", type=float, default=None, help="detener tras N minutos")
@@ -226,5 +258,5 @@ def main(argv: list[str] | None = None) -> int:
 
     args = p.parse_args(argv)
     cfg = Config.load(args.config)
-    return {"fetch": cmd_fetch, "synth": cmd_synth, "backtest": cmd_backtest, "diagnose": cmd_diagnose, "analyze": cmd_analyze,
+    return {"fetch": cmd_fetch, "synth": cmd_synth, "backtest": cmd_backtest, "diagnose": cmd_diagnose, "analyze": cmd_analyze, "sweep": cmd_sweep,
             "paper": cmd_paper, "review": cmd_review}[args.cmd](args, cfg)

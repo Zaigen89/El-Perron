@@ -3,7 +3,7 @@ __pycache__/
 .venv/
 venv/
 .env
-data/*.csv
+data/SYNTH_*.csv
 memory/*_journal.jsonl
 memory/llm_cache.json
 .pytest_cache/

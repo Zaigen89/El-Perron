@@ -37,6 +37,7 @@ class FeesConfig:
 
 @dataclass
 class StrategyConfig:
+    name: str = "value_pullback_v3"
     ema_fast: int = 9
     ema_slow: int = 21
     ema_trend: int = 50
@@ -55,6 +56,16 @@ class StrategyConfig:
     max_bars_in_trade: int = 12
     use_vwap_filter: bool = True
     min_tp_cost_ratio: float = 2.0
+    # --- value_pullback_v3 ---
+    rr: float = 2.0                # objetivo = rr x distancia del stop
+    swing_lookback: int = 4        # velas para el mínimo/máximo estructural del stop
+    stop_buffer_atr: float = 0.25  # colchón debajo del mínimo, en ATR
+    min_stop_atr: float = 1.0      # stop mínimo en ATR (evita stops dentro del ruido)
+    max_stop_atr: float = 3.0      # stop máximo en ATR (retroceso demasiado profundo -> no operar)
+    value_touch_pct: float = 0.05  # tolerancia para considerar que tocó la EMA lenta / VWAP
+    max_dist_vwap_pct: float = 0.35  # no entrar extendido respecto al VWAP
+    rsi_pb_low: float = 35.0       # RSI mínimo en el retroceso (long)
+    rsi_pb_high: float = 60.0      # RSI máximo en el retroceso (long)
 
 
 @dataclass
@@ -90,8 +101,8 @@ class PaperConfig:
 @dataclass
 class Config:
     symbol: str = "BTCUSDT"
-    interval: str = "5m"
-    trend_interval: str = "15m"
+    interval: str = "15m"
+    trend_interval: str = "1h"
     data: DataConfig = field(default_factory=DataConfig)
     capital: CapitalConfig = field(default_factory=CapitalConfig)
     fees: FeesConfig = field(default_factory=FeesConfig)
@@ -108,8 +119,8 @@ class Config:
             raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
         return cls(
             symbol=raw.get("symbol", "BTCUSDT"),
-            interval=raw.get("interval", "5m"),
-            trend_interval=raw.get("trend_interval", "15m"),
+            interval=raw.get("interval", "15m"),
+            trend_interval=raw.get("trend_interval", "1h"),
             data=_build(DataConfig, raw.get("data")),
             capital=_build(CapitalConfig, raw.get("capital")),
             fees=_build(FeesConfig, raw.get("fees")),

@@ -1,8 +1,8 @@
 # Configuración de El Perrón - bot de scalping BTC (paper trading)
 
 symbol: BTCUSDT
-interval: 5m            # velas base. En 1m el ATR de BTC (~0.04%) no cubre las comisiones; en 5m sí (ver `diagnose`)
-trend_interval: 15m     # velas para el filtro de tendencia
+interval: 15m           # velas base. En 1m/5m el ATR de BTC no cubre las comisiones con margen (ver `diagnose`)
+trend_interval: 1h      # velas para el filtro de tendencia
 
 data:
   base_url: https://api.binance.com      # alternativas: https://data-api.binance.vision , https://api.binance.us
@@ -16,9 +16,10 @@ fees:
   slippage_pct: 0.01    # % de deslizamiento asumido por lado
 
 strategy:
+  name: value_pullback_v3   # alternativa: scalping_pullback_v2 (rupturas; sin ventaja en datos reales)
   ema_fast: 9
   ema_slow: 21
-  ema_trend: 50         # sobre velas de tendencia (15m)
+  ema_trend: 50         # sobre velas de tendencia (1h)
   rsi_period: 7
   rsi_oversold: 45      # nivel de retroceso en tendencia alcista (no es sobreventa clásica)
   rsi_overbought: 55    # nivel de rebote en tendencia bajista
@@ -26,14 +27,25 @@ strategy:
   min_body_ratio: 0.4   # cuerpo de la vela gatillo >= 40% de su rango
   atr_period: 14
   volume_ma: 20
-  volume_min_ratio: 1.2 # volumen de la vela >= 1.2x su media
-  atr_min_pct: 0.05     # ATR mínimo en % del precio (evita mercado muerto)
-  atr_max_pct: 0.60     # ATR máximo en % del precio (evita caos)
-  tp_atr: 2.0           # take profit en múltiplos de ATR
-  sl_atr: 1.0           # stop loss en múltiplos de ATR
-  max_bars_in_trade: 12 # salida por tiempo (12 velas de 5m = 1 hora)
+  volume_min_ratio: 0.8 # en un retroceso el volumen suele ser bajo; solo se exige que no esté muerto
+  atr_min_pct: 0.08     # ATR mínimo en % del precio (evita mercado muerto)
+  atr_max_pct: 0.80     # ATR máximo en % del precio (evita caos)
+  max_bars_in_trade: 12 # salida por tiempo (12 velas de 15m = 3 horas)
   min_tp_cost_ratio: 2.0 # el objetivo debe ser >= 2x el costo ida y vuelta (comisiones+slippage)
   use_vwap_filter: true
+  # --- value_pullback_v3 ---
+  rr: 2.0               # objetivo = 2x la distancia del stop
+  swing_lookback: 4     # el stop va debajo del mínimo de las últimas 4 velas...
+  stop_buffer_atr: 0.25 # ...menos un colchón de 0.25 ATR
+  min_stop_atr: 1.0     # nunca menos de 1 ATR (fuera del ruido de una vela)
+  max_stop_atr: 3.0     # si el retroceso fue más profundo que 3 ATR, no se opera
+  value_touch_pct: 0.05 # tolerancia para "tocó" la EMA21 / VWAP
+  max_dist_vwap_pct: 0.35 # no entrar extendido respecto al VWAP
+  rsi_pb_low: 35        # zona de RSI del retroceso (long); el short usa el espejo
+  rsi_pb_high: 60
+  # --- scalping_pullback_v2 (solo si strategy.name = scalping_pullback_v2) ---
+  tp_atr: 2.0
+  sl_atr: 1.0
 
 risk:
   risk_per_trade_pct: 0.5   # % del capital arriesgado por operación

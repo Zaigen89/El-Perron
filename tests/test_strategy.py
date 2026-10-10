@@ -2,13 +2,13 @@ import pandas as pd
 
 from perron.config import StrategyConfig
 from perron.data import generate_synthetic
-from tests.helpers import synth5
-from perron.strategy import ScalpingStrategy
+from tests.helpers import synth5, synth15
+from perron.strategy import ScalpingStrategy, ValuePullbackStrategy
 
 
 def test_signal_geometry():
     cfg = StrategyConfig()
-    strat = ScalpingStrategy(cfg)
+    strat = ScalpingStrategy(cfg, "15m")
     df = strat.prepare(synth5(days=30, seed=42))
     signals = [s for i in range(len(df)) if (s := strat.signal_at(df, i)) is not None]
     assert signals, "la estrategia debería generar al menos una señal en 10 días sintéticos"
@@ -44,3 +44,22 @@ def test_cost_filter_drops_small_targets():
         s = real.signal_at(df, i)
         if s is not None:
             assert abs(s.take_profit - s.price) / s.price * 100 >= 2.0 * 0.1 - 1e-9
+
+
+
+def test_value_pullback_v3_geometry_and_cost():
+    cfg = StrategyConfig()
+    strat = ValuePullbackStrategy(cfg, "1h", round_trip_cost_pct=0.1)
+    df = strat.prepare(synth15(days=90, seed=42))
+    signals = [s for i in range(len(df)) if (s := strat.signal_at(df, i)) is not None]
+    assert signals, "v3 debería generar señales en 90 días sintéticos de 15m"
+    for s in signals:
+        stop_dist = abs(s.price - s.stop_loss)
+        assert cfg.min_stop_atr * s.atr - 1e-9 <= stop_dist <= cfg.max_stop_atr * s.atr + 1e-9
+        assert abs(s.take_profit - s.price) == __import__("pytest").approx(cfg.rr * stop_dist)
+        assert abs(s.features["dist_vwap_pct"]) <= cfg.max_dist_vwap_pct
+        assert abs(s.take_profit - s.price) / s.price * 100 >= cfg.min_tp_cost_ratio * 0.1 - 1e-9
+        if s.direction > 0:
+            assert s.stop_loss < s.price < s.take_profit
+        else:
+            assert s.take_profit < s.price < s.stop_loss

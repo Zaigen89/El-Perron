@@ -55,7 +55,7 @@ def apply_proposals(config_path: str | Path, proposals: list[dict]) -> list[str]
         val = float(prop["proposed"])
         if not (lo <= val <= hi):
             continue
-        if name in ("max_bars_in_trade", "pullback_lookback"):
+        if name in ("max_bars_in_trade", "pullback_lookback", "swing_lookback"):
             val = int(val)
         old = strat.get(name)
         strat[name] = val
