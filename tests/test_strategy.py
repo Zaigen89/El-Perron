@@ -25,3 +25,21 @@ def test_no_signal_in_warmup():
     df = strat.prepare(generate_synthetic(days=1, seed=5))
     for i in range(strat.warmup_bars):
         assert strat.signal_at(df, i) is None
+
+
+def test_cost_filter_drops_small_targets():
+    cfg = StrategyConfig()
+    raw = generate_synthetic(days=10, seed=42)
+    free = ScalpingStrategy(cfg, round_trip_cost_pct=0.0)
+    df = free.prepare(raw)
+    n_free = sum(1 for i in range(len(df)) if free.signal_at(df, i) is not None)
+    # Costo absurdo: ninguna señal debería pasar
+    pricey = ScalpingStrategy(cfg, round_trip_cost_pct=5.0)
+    n_pricey = sum(1 for i in range(len(df)) if pricey.signal_at(df, i) is not None)
+    assert n_free > 0 and n_pricey == 0
+    # Costo realista (0.1%): las que pasan tienen objetivo >= 2x el costo
+    real = ScalpingStrategy(cfg, round_trip_cost_pct=0.1)
+    for i in range(len(df)):
+        s = real.signal_at(df, i)
+        if s is not None:
+            assert abs(s.take_profit - s.price) / s.price * 100 >= 2.0 * 0.1 - 1e-9

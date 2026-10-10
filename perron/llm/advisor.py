@@ -69,6 +69,7 @@ class ClaudeAdvisor:
         self.calls = 0
         self.budget_exhausted = False
         self.errors = 0
+        self.last_error: Exception | None = None
         # El conocimiento y las lecciones se leen una vez por corrida (estables -> cacheables)
         self._knowledge = self.memory.knowledge()
         self._lessons = self.memory.lessons()
@@ -92,6 +93,7 @@ class ClaudeAdvisor:
             out = self.client.json(ADVISOR_SYSTEM, user, ADVISOR_SCHEMA, max_tokens=1024)
         except Exception as exc:  # cualquier fallo del LLM -> seguimos solo con reglas
             self.errors += 1
+            self.last_error = exc
             return {"decision": "approve", "size_multiplier": 1.0, "sl_multiplier": 1.0, "tp_multiplier": 1.0,
                     "confidence": 0.0, "reasoning": f"error del asesor, se aplican solo las reglas: {exc}"[:300]}
         self.calls += 1

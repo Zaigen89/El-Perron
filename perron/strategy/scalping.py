@@ -21,9 +21,12 @@ from .base import Signal
 class ScalpingStrategy:
     name = "scalping_pullback_v1"
 
-    def __init__(self, cfg: StrategyConfig, trend_interval: str = "5m"):
+    def __init__(self, cfg: StrategyConfig, trend_interval: str = "5m", round_trip_cost_pct: float = 0.0):
         self.cfg = cfg
         self.trend_interval = trend_interval
+        # Costo ida y vuelta (comisiones + slippage) en % del precio. Una señal cuyo objetivo
+        # no supera este costo por un margen (min_tp_cost_ratio) se descarta: no vale la pena.
+        self.round_trip_cost_pct = round_trip_cost_pct
 
     def prepare(self, df: pd.DataFrame) -> pd.DataFrame:
         return add_features(df, self.cfg, self.trend_interval)
@@ -47,6 +50,9 @@ class ScalpingStrategy:
             return None
         if row["vol_ratio"] < c.volume_min_ratio:
             return None
+        tp_pct = c.tp_atr * row["atr_pct"]
+        if self.round_trip_cost_pct > 0 and tp_pct < c.min_tp_cost_ratio * self.round_trip_cost_pct:
+            return None  # objetivo demasiado chico frente a comisiones
 
         reasons: list[str] = []
         direction = 0

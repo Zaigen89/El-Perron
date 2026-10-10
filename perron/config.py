@@ -52,6 +52,7 @@ class StrategyConfig:
     sl_atr: float = 1.0
     max_bars_in_trade: int = 15
     use_vwap_filter: bool = True
+    min_tp_cost_ratio: float = 2.0
 
 
 @dataclass

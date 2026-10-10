@@ -80,7 +80,7 @@ REVIEWER_SCHEMA = {
 TUNABLE_PARAMS = {
     "rsi_oversold": (20, 45), "rsi_overbought": (55, 80), "volume_min_ratio": (1.0, 3.0),
     "atr_min_pct": (0.01, 0.10), "atr_max_pct": (0.15, 1.0), "tp_atr": (0.8, 3.0),
-    "sl_atr": (0.5, 2.0), "max_bars_in_trade": (5, 60),
+    "sl_atr": (0.5, 2.0), "max_bars_in_trade": (5, 60), "min_tp_cost_ratio": (1.0, 5.0),
 }
 
 

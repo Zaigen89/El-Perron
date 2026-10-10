@@ -30,6 +30,7 @@ strategy:
   tp_atr: 1.5           # take profit en múltiplos de ATR
   sl_atr: 1.0           # stop loss en múltiplos de ATR
   max_bars_in_trade: 15 # salida por tiempo
+  min_tp_cost_ratio: 2.0 # el objetivo debe ser >= 2x el costo ida y vuelta (comisiones+slippage)
   use_vwap_filter: true
 
 risk:

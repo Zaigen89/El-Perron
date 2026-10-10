@@ -80,6 +80,8 @@ Long (short es espejo):
 3. RSI(7) acaba de cruzar hacia arriba el nivel 35 (retroceso que termina).
 4. Vela de señal alcista con cuerpo >= 40% de su rango y volumen >= 1.2x su media de 20.
 5. ATR entre 0.03% y 0.40% del precio.
+7. El objetivo (1.5 ATR) debe ser al menos 2x el costo ida y vuelta (comisiones + slippage, ~0.1%).
+   Sin este filtro, las operaciones que llegan al objetivo pierden dinero en neto.
 6. Precio por encima del VWAP de la sesión.
 
 Entrada en la apertura de la vela siguiente. Stop = 1 ATR, objetivo = 1.5 ATR, salida por tiempo a las 15 velas.

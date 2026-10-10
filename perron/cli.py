@@ -10,6 +10,32 @@ from .config import Config
 from .strategy import ScalpingStrategy
 
 
+def _strategy(cfg: Config) -> ScalpingStrategy:
+    return ScalpingStrategy(cfg.strategy, cfg.trend_interval,
+                            round_trip_cost_pct=cfg.fees.round_trip_fraction * 100.0)
+
+
+def _explain_api_error(exc: Exception) -> str | None:
+    try:
+        import anthropic
+    except ImportError:
+        return None
+    if isinstance(exc, anthropic.AuthenticationError):
+        return ("La clave de la API de Anthropic no es válida (error 401).\n"
+                "  - Revisa que exportaste la clave real: export ANTHROPIC_API_KEY=sk-ant-api03-...\n"
+                "  - Comprueba con: echo $ANTHROPIC_API_KEY\n"
+                "  - Crea una en https://console.anthropic.com/settings/keys")
+    if isinstance(exc, anthropic.PermissionDeniedError):
+        return "La clave no tiene permiso para este modelo (error 403). Revisa el plan o cambia llm.model en config.yaml."
+    if isinstance(exc, anthropic.RateLimitError):
+        return "Límite de uso de la API alcanzado (error 429). Espera un momento o reduce llm.max_calls_per_run."
+    if isinstance(exc, anthropic.APIConnectionError):
+        return f"No se pudo conectar con la API de Anthropic: {exc}"
+    if isinstance(exc, anthropic.APIStatusError):
+        return f"Error de la API de Anthropic ({exc.status_code}): {exc.message}"
+    return None
+
+
 def cmd_fetch(args, cfg: Config) -> int:
     from .data import fetch_klines, save_csv
     print(f"Descargando {args.days} días de {cfg.symbol} {cfg.interval} desde {cfg.data.base_url} ...")
@@ -52,13 +78,16 @@ def cmd_backtest(args, cfg: Config) -> int:
     journal_path = Path(cfg.llm.memory_dir) / "backtest_journal.jsonl"
     if journal_path.exists():
         journal_path.unlink()
-    bt = Backtester(cfg, ScalpingStrategy(cfg.strategy, cfg.trend_interval), advisor,
+    bt = Backtester(cfg, _strategy(cfg), advisor,
                     Journal(journal_path), verbose=args.verbose)
     print(f"Backtest sobre {len(df)} velas ({df.index[0]} -> {df.index[-1]}) | LLM {'activo' if advisor else 'desactivado'}")
     res = bt.run(df)
     if advisor is not None:
         advisor.close()
         c = advisor.client
+        if advisor.errors and advisor.calls == 0 and advisor.last_error is not None:
+            msg = _explain_api_error(advisor.last_error) or str(advisor.last_error)
+            print(f"\nAVISO: el asesor LLM no funcionó en ninguna señal; se aplicaron solo las reglas.\n{msg}\n")
         print(f"LLM: {advisor.calls} llamadas nuevas, {advisor.errors} errores, "
               f"tokens in={getattr(c, 'input_tokens', 0)} out={getattr(c, 'output_tokens', 0)}"
               + (" | presupuesto de llamadas agotado" if advisor.budget_exhausted else ""))
@@ -77,7 +106,7 @@ def cmd_paper(args, cfg: Config) -> int:
     from .llm import build_advisor
     from .paper import PaperTrader
     advisor = build_advisor(cfg, args.llm or cfg.llm.enabled)
-    trader = PaperTrader(cfg, ScalpingStrategy(cfg.strategy, cfg.trend_interval), advisor)
+    trader = PaperTrader(cfg, _strategy(cfg), advisor)
     trader.run(max_minutes=args.minutes)
     if advisor is not None:
         advisor.close()
@@ -102,7 +131,14 @@ def cmd_review(args, cfg: Config) -> int:
     equity.index = pd.DatetimeIndex(trades.sort_values("exit_time")["exit_time"])
     metrics = compute_metrics(trades, equity, cfg.capital.initial)
     print(f"Revisando {len(trades)} operaciones con {cfg.llm.model} ...")
-    out = review(cfg, metrics, trades)
+    try:
+        out = review(cfg, metrics, trades)
+    except Exception as exc:
+        msg = _explain_api_error(exc)
+        if msg is None:
+            raise
+        print(f"\nERROR: {msg}")
+        return 1
     print("\n=== Resumen del revisor ===\n" + out["summary"])
     print("\n=== Lecciones (guardadas en " + out["lessons_path"] + ") ===\n" + out["lessons_markdown"])
     print("\n=== Propuestas de parámetros ===")
