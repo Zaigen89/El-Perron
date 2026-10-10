@@ -8,10 +8,13 @@ o se ajusta, usando tus ideas de trading y las lecciones que va aprendiendo de s
 
 ## Instalación (en tu PC)
 
+Necesitas Python 3.10 o superior. En macOS el comando es `python3`, no `python`. Si `python3 --version`
+no responde, instálalo desde https://www.python.org/downloads/ o con Homebrew (`brew install python`).
+
 ```bash
 git clone https://github.com/Zaigen89/El-Perron
 cd El-Perron
-python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
+python3 -m venv .venv && source .venv/bin/activate     # Windows: py -m venv .venv ; .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
