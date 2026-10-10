@@ -27,8 +27,8 @@ export ANTHROPIC_API_KEY=sk-ant-...        # Windows (PowerShell): $env:ANTHROPI
 ## Flujo de trabajo
 
 ```bash
-# 1. Datos reales de Binance (público, sin clave). 30 días de velas de 1 minuto:
-python -m perron fetch --days 30
+# 1. Datos reales de Binance (público, sin clave). 60 días de velas de 5 minutos:
+python -m perron fetch --days 60
 
 #    Sin conexión a Binance puedes probar el flujo con datos sintéticos (NO sirven para validar nada):
 python -m perron synth --days 10
@@ -75,19 +75,23 @@ perron/
   journal.py         registro de cada operación (JSONL) con las features de la señal y la decisión del LLM
 ```
 
-### Estrategia inicial (`scalping_pullback_v1`)
+### Estrategia inicial (`scalping_pullback_v2`)
+
+Temporalidad base de 5 minutos con filtro de tendencia en 15 minutos. Se eligió con `diagnose`: en velas de
+1 minuto el ATR de BTC (~0.04% del precio) no alcanza a cubrir las comisiones de ida y vuelta (~0.10%).
 
 Long (short es espejo):
-1. Tendencia 5m alcista: precio sobre la EMA50 de 5m y esa EMA subiendo (se usa la vela 5m anterior cerrada, sin mirar al futuro).
-2. En 1m, EMA9 > EMA21.
-3. RSI(7) acaba de cruzar hacia arriba el nivel 35 (retroceso que termina).
-4. Vela de señal alcista con cuerpo >= 40% de su rango y volumen >= 1.2x su media de 20.
-5. ATR entre 0.03% y 0.40% del precio.
-7. El objetivo (1.5 ATR) debe ser al menos 2x el costo ida y vuelta (comisiones + slippage, ~0.1%).
-   Sin este filtro, las operaciones que llegan al objetivo pierden dinero en neto.
-6. Precio por encima del VWAP de la sesión.
+1. Tendencia 15m alcista: precio sobre la EMA50 de 15m y esa EMA subiendo (se usa la vela 15m anterior cerrada, sin mirar al futuro).
+2. En 5m, EMA9 > EMA21.
+3. Hubo un retroceso en las últimas 5 velas: el RSI(7) bajó de 45 o el precio tocó la EMA9.
+4. Gatillo: la vela cierra sobre la EMA9, rompe el máximo de la vela anterior, es alcista con cuerpo >= 40% de su rango,
+   el RSI ya está de vuelta sobre 45 y el volumen es >= 1.2x su media de 20.
+5. ATR entre 0.05% y 0.60% del precio.
+6. El objetivo (2 ATR) debe ser al menos 2x el costo ida y vuelta. Sin este filtro, las operaciones que llegan al
+   objetivo pierden dinero en neto.
+7. Precio por encima del VWAP de la sesión.
 
-Entrada en la apertura de la vela siguiente. Stop = 1 ATR, objetivo = 1.5 ATR, salida por tiempo a las 15 velas.
+Entrada en la apertura de la vela siguiente. Stop = 1 ATR, objetivo = 2 ATR, salida por tiempo a las 12 velas (1 hora).
 Si en una vela se tocan stop y objetivo, se asume el stop (conservador).
 
 ### Dónde entra el LLM y dónde no
@@ -141,11 +145,11 @@ problema está en el conocimiento que recibe, no en el modelo.
 ## Advertencias honestas
 
 - Los datos sintéticos son ruido con regímenes; cualquier resultado sobre ellos es irrelevante. Usa `fetch`.
-- Un backtest de 30 días de 1 minuto es poca muestra. Mira el `profit_factor` y la expectativa por operación
+- Un backtest de 60 días de 5 minutos es poca muestra. Mira el `profit_factor` y la expectativa por operación
   después de comisiones, no el PnL bruto.
 - Si un parámetro propuesto por el revisor mejora el backtest, pruébalo en un periodo distinto antes de creerlo.
   Lo que mejora el pasado por ajuste fino suele empeorar el futuro.
-- Scalping en 1m es el terreno donde comisiones y latencia más duelen. El paper trading aquí asume relleno en el
+- Scalping intradía es el terreno donde comisiones y latencia más duelen. El paper trading aquí asume relleno en el
   precio del exchange más 0.01% de slippage; en real puede ser peor.
 
 ## Pruebas

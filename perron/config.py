@@ -41,16 +41,18 @@ class StrategyConfig:
     ema_slow: int = 21
     ema_trend: int = 50
     rsi_period: int = 7
-    rsi_oversold: float = 35.0
-    rsi_overbought: float = 65.0
+    rsi_oversold: float = 45.0     # nivel de retroceso en tendencia alcista
+    rsi_overbought: float = 55.0   # nivel de rebote en tendencia bajista
+    pullback_lookback: int = 5     # velas hacia atrás donde buscar el retroceso
+    min_body_ratio: float = 0.4    # cuerpo de la vela gatillo >= 40% de su rango
     atr_period: int = 14
     volume_ma: int = 20
     volume_min_ratio: float = 1.2
-    atr_min_pct: float = 0.03
-    atr_max_pct: float = 0.40
-    tp_atr: float = 1.5
+    atr_min_pct: float = 0.05
+    atr_max_pct: float = 0.60
+    tp_atr: float = 2.0
     sl_atr: float = 1.0
-    max_bars_in_trade: int = 15
+    max_bars_in_trade: int = 12
     use_vwap_filter: bool = True
     min_tp_cost_ratio: float = 2.0
 
@@ -88,8 +90,8 @@ class PaperConfig:
 @dataclass
 class Config:
     symbol: str = "BTCUSDT"
-    interval: str = "1m"
-    trend_interval: str = "5m"
+    interval: str = "5m"
+    trend_interval: str = "15m"
     data: DataConfig = field(default_factory=DataConfig)
     capital: CapitalConfig = field(default_factory=CapitalConfig)
     fees: FeesConfig = field(default_factory=FeesConfig)
@@ -106,8 +108,8 @@ class Config:
             raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
         return cls(
             symbol=raw.get("symbol", "BTCUSDT"),
-            interval=raw.get("interval", "1m"),
-            trend_interval=raw.get("trend_interval", "5m"),
+            interval=raw.get("interval", "5m"),
+            trend_interval=raw.get("trend_interval", "15m"),
             data=_build(DataConfig, raw.get("data")),
             capital=_build(CapitalConfig, raw.get("capital")),
             fees=_build(FeesConfig, raw.get("fees")),

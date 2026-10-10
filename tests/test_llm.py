@@ -4,6 +4,7 @@ import json
 from perron.backtest import Backtester
 from perron.config import Config
 from perron.data import generate_synthetic
+from tests.helpers import synth5
 from perron.llm.advisor import ClaudeAdvisor
 from perron.llm.memory import Memory
 from perron.llm.prompts import ADVISOR_SCHEMA, REVIEWER_SCHEMA
@@ -39,7 +40,7 @@ def test_advisor_uses_knowledge_and_caches(tmp_path):
                        "tp_multiplier": 1.2, "confidence": 0.6, "reasoning": "ok"})
     advisor = ClaudeAdvisor(cfg, client=fake)
     bt = Backtester(cfg, ScalpingStrategy(cfg.strategy, cfg.trend_interval, cfg.fees.round_trip_fraction * 100), advisor=advisor)
-    res = bt.run(generate_synthetic(days=10, seed=42))
+    res = bt.run(synth5(days=30, seed=42))
     advisor.close()
     assert fake.calls > 0
     assert "Nunca operar contra la tendencia" in fake.last_user
@@ -48,7 +49,7 @@ def test_advisor_uses_knowledge_and_caches(tmp_path):
     fake2 = FakeClient(fake.answer)
     advisor2 = ClaudeAdvisor(cfg, client=fake2)
     Backtester(cfg, ScalpingStrategy(cfg.strategy, cfg.trend_interval, cfg.fees.round_trip_fraction * 100), advisor=advisor2).run(
-        generate_synthetic(days=10, seed=42))
+        synth5(days=30, seed=42))
     assert fake2.calls == 0
 
 
@@ -64,7 +65,7 @@ def test_advisor_budget_and_errors_fall_back_to_rules(tmp_path):
 
     advisor = ClaudeAdvisor(cfg, client=Boom(None))
     bt = Backtester(cfg, ScalpingStrategy(cfg.strategy, cfg.trend_interval, cfg.fees.round_trip_fraction * 100), advisor=advisor)
-    res = bt.run(generate_synthetic(days=10, seed=42))
+    res = bt.run(synth5(days=30, seed=42))
     assert res.metrics["n_trades"] > 0          # las reglas siguen operando
     assert advisor.errors > 0
 
@@ -72,7 +73,7 @@ def test_advisor_budget_and_errors_fall_back_to_rules(tmp_path):
 def test_review_writes_lessons_and_filters_proposals(tmp_path):
     cfg = _cfg(tmp_path)
     bt = Backtester(cfg, ScalpingStrategy(cfg.strategy, cfg.trend_interval, cfg.fees.round_trip_fraction * 100))
-    res = bt.run(generate_synthetic(days=10, seed=42))
+    res = bt.run(synth5(days=30, seed=42))
     fake = FakeClient({
         "lessons_markdown": "- Evitar entradas con vol_ratio < 1.5",
         "parameter_proposals": [

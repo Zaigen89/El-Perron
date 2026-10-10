@@ -61,7 +61,7 @@ def diagnose(df: pd.DataFrame, cfg: Config, intervals: list[str] | None = None) 
         d = df if iv == base else resample_ohlcv(df, _RULE[iv])
         if len(d) < 300:
             continue
-        results[iv] = _funnel(d, cfg, _TREND_FOR[iv], cost_pct)
+        results[iv] = _funnel(d, cfg, cfg.trend_interval if iv == base else _TREND_FOR[iv], cost_pct)
     header = f"{'':34}" + "".join(f"{iv:>12}" for iv in results)
     lines.append(header)
     rows = [("velas", "velas", "{:.0f}"),

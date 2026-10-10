@@ -2,13 +2,14 @@ import pandas as pd
 
 from perron.config import StrategyConfig
 from perron.data import generate_synthetic
+from tests.helpers import synth5
 from perron.strategy import ScalpingStrategy
 
 
 def test_signal_geometry():
     cfg = StrategyConfig()
     strat = ScalpingStrategy(cfg)
-    df = strat.prepare(generate_synthetic(days=10, seed=42))
+    df = strat.prepare(synth5(days=30, seed=42))
     signals = [s for i in range(len(df)) if (s := strat.signal_at(df, i)) is not None]
     assert signals, "la estrategia debería generar al menos una señal en 10 días sintéticos"
     for s in signals:
@@ -29,7 +30,7 @@ def test_no_signal_in_warmup():
 
 def test_cost_filter_drops_small_targets():
     cfg = StrategyConfig()
-    raw = generate_synthetic(days=10, seed=42)
+    raw = synth5(days=30, seed=42)
     free = ScalpingStrategy(cfg, round_trip_cost_pct=0.0)
     df = free.prepare(raw)
     n_free = sum(1 for i in range(len(df)) if free.signal_at(df, i) is not None)

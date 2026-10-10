@@ -1,8 +1,8 @@
 # Configuración de El Perrón - bot de scalping BTC (paper trading)
 
 symbol: BTCUSDT
-interval: 1m            # velas base para scalping
-trend_interval: 5m      # velas para el filtro de tendencia
+interval: 5m            # velas base. En 1m el ATR de BTC (~0.04%) no cubre las comisiones; en 5m sí (ver `diagnose`)
+trend_interval: 15m     # velas para el filtro de tendencia
 
 data:
   base_url: https://api.binance.com      # alternativas: https://data-api.binance.vision , https://api.binance.us
@@ -12,24 +12,26 @@ capital:
   initial: 10000.0      # USDT ficticios
 
 fees:
-  taker_pct: 0.04       # % por lado (Binance futuros taker). Spot sería 0.10
+  taker_pct: 0.04       # % por lado (Binance futuros taker). Spot sería 0.10; maker ~0.02
   slippage_pct: 0.01    # % de deslizamiento asumido por lado
 
 strategy:
   ema_fast: 9
   ema_slow: 21
-  ema_trend: 50         # sobre velas de tendencia (5m)
+  ema_trend: 50         # sobre velas de tendencia (15m)
   rsi_period: 7
-  rsi_oversold: 35
-  rsi_overbought: 65
+  rsi_oversold: 45      # nivel de retroceso en tendencia alcista (no es sobreventa clásica)
+  rsi_overbought: 55    # nivel de rebote en tendencia bajista
+  pullback_lookback: 5  # velas hacia atrás donde buscar el retroceso
+  min_body_ratio: 0.4   # cuerpo de la vela gatillo >= 40% de su rango
   atr_period: 14
   volume_ma: 20
   volume_min_ratio: 1.2 # volumen de la vela >= 1.2x su media
-  atr_min_pct: 0.03     # ATR mínimo en % del precio (evita mercado muerto)
-  atr_max_pct: 0.40     # ATR máximo en % del precio (evita caos)
-  tp_atr: 1.5           # take profit en múltiplos de ATR
+  atr_min_pct: 0.05     # ATR mínimo en % del precio (evita mercado muerto)
+  atr_max_pct: 0.60     # ATR máximo en % del precio (evita caos)
+  tp_atr: 2.0           # take profit en múltiplos de ATR
   sl_atr: 1.0           # stop loss en múltiplos de ATR
-  max_bars_in_trade: 15 # salida por tiempo
+  max_bars_in_trade: 12 # salida por tiempo (12 velas de 5m = 1 hora)
   min_tp_cost_ratio: 2.0 # el objetivo debe ser >= 2x el costo ida y vuelta (comisiones+slippage)
   use_vwap_filter: true
 
@@ -38,11 +40,11 @@ risk:
   max_position_pct: 50.0    # tamaño máximo de posición en % del capital
   max_daily_loss_pct: 2.0   # se detiene el día al perder esto
   max_trades_per_day: 30
-  cooldown_bars_after_loss: 5
+  cooldown_bars_after_loss: 3
 
 llm:
   enabled: false            # también se activa con --llm en la CLI
-  model: claude-opus-5-5
+  model: claude-opus-5-5    # más barato: claude-sonnet-5-5 o claude-haiku-5-5
   effort: low               # low|medium|high - low es suficiente para decisiones rápidas
   max_calls_per_run: 200    # tope de llamadas por backtest (control de costo)
   context_bars: 30          # velas recientes que ve el modelo
@@ -54,5 +56,5 @@ llm:
   tp_multiplier_bounds: [0.7, 2.0]
 
 paper:
-  poll_seconds: 10
+  poll_seconds: 15
   log_dir: memory

@@ -48,7 +48,12 @@ def cmd_fetch(args, cfg: Config) -> int:
 
 def cmd_synth(args, cfg: Config) -> int:
     from .data import generate_synthetic, save_csv
+    from .diagnose import _RULE
+    from .features import resample_ohlcv
     df = generate_synthetic(days=args.days, seed=args.seed)
+    if cfg.interval != "1m":
+        df = resample_ohlcv(df, _RULE[cfg.interval])
+        df["trades"] = (df["volume"] * 40).astype(int)
     out = Path(cfg.data.dir) / f"SYNTH_{cfg.interval}.csv"
     save_csv(df, out)
     print(f"Generadas {len(df)} velas sintéticas en {out}")

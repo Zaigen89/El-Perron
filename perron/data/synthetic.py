@@ -20,11 +20,11 @@ def generate_synthetic(days: float = 7, interval_minutes: int = 1, start_price: 
     block = max(1, int(240 / interval_minutes))
     n_blocks = n // block + 1
     drifts = rng.choice([-0.00004, 0.0, 0.00004], size=n_blocks, p=[0.3, 0.4, 0.3])
-    vols = rng.choice([0.0004, 0.0008, 0.0015], size=n_blocks, p=[0.4, 0.4, 0.2])
+    vols = rng.choice([0.00025, 0.0005, 0.0010], size=n_blocks, p=[0.4, 0.4, 0.2])
     drift = np.repeat(drifts, block)[:n]
     vol = np.repeat(vols, block)[:n]
 
-    rets = drift + vol * rng.standard_t(df=4, size=n) / np.sqrt(2)
+    rets = drift + vol * rng.standard_t(df=4, size=n) / np.sqrt(2) * 0.6
     close = start_price * np.exp(np.cumsum(rets))
     open_ = np.concatenate([[start_price], close[:-1]])
     wick = np.abs(rng.normal(0, 1, size=n)) * vol * close
