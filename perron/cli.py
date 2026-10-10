@@ -114,6 +114,27 @@ def cmd_diagnose(args, cfg: Config) -> int:
     return 0
 
 
+def cmd_analyze(args, cfg: Config) -> int:
+    from .analyze import breakdown, random_benchmark, summary
+    from .journal import Journal
+    journal_path = Path(cfg.llm.memory_dir) / (args.journal or "backtest_journal.jsonl")
+    if not journal_path.exists():
+        print(f"No existe {journal_path}. Corre un backtest primero.")
+        return 1
+    trades = Journal(journal_path).to_frame()
+    if trades.empty:
+        print("El journal no tiene operaciones.")
+        return 1
+    print(summary(trades, cfg))
+    print()
+    print(breakdown(trades))
+    if args.benchmark:
+        print()
+        df = _load_data(args, cfg)
+        print(random_benchmark(cfg, _strategy(cfg), df, len(trades), seeds=args.seeds))
+    return 0
+
+
 def cmd_paper(args, cfg: Config) -> int:
     from .llm import build_advisor
     from .paper import PaperTrader
@@ -188,6 +209,13 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--data", help="ruta CSV (por defecto data/<symbol>_<interval>.csv)")
     d.add_argument("--last-days", type=float, default=None)
 
+    a = sub.add_parser("analyze", help="¿hay ventaja real? bruto vs comisiones, benchmark aleatorio, desglose")
+    a.add_argument("--journal", default=None, help="archivo dentro de memory/ (por defecto backtest_journal.jsonl)")
+    a.add_argument("--benchmark", action="store_true", help="comparar contra entradas aleatorias (usa los datos del backtest)")
+    a.add_argument("--seeds", type=int, default=10)
+    a.add_argument("--data", help="ruta CSV para el benchmark")
+    a.add_argument("--last-days", type=float, default=None)
+
     pp = sub.add_parser("paper", help="paper trading en vivo con precios de Binance")
     pp.add_argument("--llm", action="store_true")
     pp.add_argument("--minutes", type=float, default=None, help="detener tras N minutos")
@@ -198,5 +226,5 @@ def main(argv: list[str] | None = None) -> int:
 
     args = p.parse_args(argv)
     cfg = Config.load(args.config)
-    return {"fetch": cmd_fetch, "synth": cmd_synth, "backtest": cmd_backtest, "diagnose": cmd_diagnose,
+    return {"fetch": cmd_fetch, "synth": cmd_synth, "backtest": cmd_backtest, "diagnose": cmd_diagnose, "analyze": cmd_analyze,
             "paper": cmd_paper, "review": cmd_review}[args.cmd](args, cfg)

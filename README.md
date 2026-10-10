@@ -40,6 +40,10 @@ python -m perron diagnose
 python -m perron backtest
 python -m perron backtest --last-days 7 --verbose
 
+# 3b. Análisis: ¿hay ventaja real o es ruido + comisiones? Desglose por hora, volumen, volatilidad...
+python -m perron analyze
+python -m perron analyze --benchmark      # compara contra entradas aleatorias con las mismas salidas
+
 # 4. Backtest con el asesor Claude (cada señal se consulta; las decisiones se cachean):
 python -m perron backtest --llm
 
