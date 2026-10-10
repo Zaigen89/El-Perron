@@ -37,9 +37,10 @@ def _explain_api_error(exc: Exception) -> str | None:
 
 def cmd_fetch(args, cfg: Config) -> int:
     from .data import fetch_klines, save_csv
-    print(f"Descargando {args.days} días de {cfg.symbol} {cfg.interval} desde {cfg.data.base_url} ...")
-    df = fetch_klines(cfg.symbol, cfg.interval, args.days, cfg.data.base_url)
-    out = Path(cfg.data.dir) / f"{cfg.symbol}_{cfg.interval}.csv"
+    interval = args.interval or cfg.interval
+    print(f"Descargando {args.days} días de {cfg.symbol} {interval} desde {cfg.data.base_url} ...")
+    df = fetch_klines(cfg.symbol, interval, args.days, cfg.data.base_url)
+    out = Path(cfg.data.dir) / f"{cfg.symbol}_{interval}.csv"
     save_csv(df, out)
     print(f"Guardadas {len(df)} velas en {out} ({df.index[0]} -> {df.index[-1]})")
     return 0
@@ -219,7 +220,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     f = sub.add_parser("fetch", help="descargar velas históricas de Binance")
-    f.add_argument("--days", type=float, default=30)
+    f.add_argument("--days", type=float, default=180)
+    f.add_argument("--interval", default=None, help="1m,5m,15m,1h,4h,1d (por defecto el de config.yaml)")
 
     s = sub.add_parser("synth", help="generar velas sintéticas para probar sin conexión")
     s.add_argument("--days", type=float, default=7)

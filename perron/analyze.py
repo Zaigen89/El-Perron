@@ -28,7 +28,13 @@ def summary(trades: pd.DataFrame, cfg: Config) -> str:
     t["risk_amt"] = (t["entry_price"] - t["stop_loss"]).abs() * t["qty"]
     t["reward_amt"] = (t["take_profit"] - t["entry_price"]).abs() * t["qty"]
     fee_over_stop = float((t["fees"] / t["risk_amt"]).median())
-    rr = float((t["reward_amt"] / t["risk_amt"]).median())
+    rr_series = (t["reward_amt"] / t["risk_amt"]).dropna()
+    # Sin objetivo fijo (stop móvil): usamos el ratio ganancia media / pérdida media observado
+    if len(rr_series):
+        rr = float(rr_series.median())
+    else:
+        wins, losses = t.loc[t["gross"] > 0, "gross"], t.loc[t["gross"] <= 0, "gross"]
+        rr = float(wins.mean() / abs(losses.mean())) if len(wins) and len(losses) and losses.mean() != 0 else 1.0
     win = float((t["pnl"] > 0).mean())
     win_gross = float((t["gross"] > 0).mean())
     # Esperanza en unidades de stop: p*RR - (1-p) - fee_over_stop = 0  ->  p = (1 + f) / (1 + RR)
@@ -120,10 +126,23 @@ class RandomStrategy:
         if self.cfg.name == "value_pullback_v3":
             stop_dist = max(self.cfg.min_stop_atr, 1.0) * a * 1.3  # ~ stop estructural típico
             tp_dist = self.cfg.rr * stop_dist
+        elif self.cfg.name == "trend_follow_v4":
+            stop_dist, tp_dist = self.cfg.initial_stop_atr * a, None
         else:
             stop_dist, tp_dist = self.cfg.sl_atr * a, self.cfg.tp_atr * a
         return Signal(time=df.index[i], direction=d, price=price, stop_loss=price - d * stop_dist,
-                      take_profit=price + d * tp_dist, atr=a, reasons=["aleatorio"], features={})
+                      take_profit=None if tp_dist is None else price + d * tp_dist, atr=a,
+                      reasons=["aleatorio"], features={})
+
+    def trail_stop(self, df, i, direction, entry_price, current_stop):
+        if hasattr(self.base, "trail_stop"):
+            return self.base.trail_stop(df, i, direction, entry_price, current_stop)
+        return None
+
+    def should_exit(self, df, i, direction, entry_price):
+        if hasattr(self.base, "should_exit"):
+            return self.base.should_exit(df, i, direction, entry_price)
+        return False
 
 
 def random_benchmark(cfg: Config, strategy, df: pd.DataFrame, n_trades_real: int, seeds: int = 10) -> str:

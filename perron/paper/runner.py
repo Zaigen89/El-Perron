@@ -30,7 +30,7 @@ class LivePosition:
     entry_price: float
     qty: float
     stop_loss: float
-    take_profit: float
+    take_profit: float | None
     entry_fee: float
     bars_held: int
     decision: dict | None
@@ -87,16 +87,21 @@ class PaperTrader:
             df = df.iloc[:-1]
         return df
 
-    def _check_exit(self, price: float, reason_time: str) -> None:
+    def _force_exit(self, price: float, reason_time: str, reason: str) -> None:
+        self._check_exit(price, reason_time, force_reason=reason)
+
+    def _check_exit(self, price: float, reason_time: str, force_reason: str | None = None) -> None:
         pos = self.position
         if pos is None:
             return
         d = 1 if pos.signal["side"] == "long" else -1
         reason = None
         exit_price = None
-        if (d > 0 and price <= pos.stop_loss) or (d < 0 and price >= pos.stop_loss):
+        if force_reason:
+            reason, exit_price = force_reason, price
+        elif (d > 0 and price <= pos.stop_loss) or (d < 0 and price >= pos.stop_loss):
             reason, exit_price = "stop_loss", pos.stop_loss
-        elif (d > 0 and price >= pos.take_profit) or (d < 0 and price <= pos.take_profit):
+        elif pos.take_profit is not None and ((d > 0 and price >= pos.take_profit) or (d < 0 and price <= pos.take_profit)):
             reason, exit_price = "take_profit", pos.take_profit
         elif pos.bars_held >= self.cfg.strategy.max_bars_in_trade:
             reason, exit_price = "time_exit", price
@@ -139,7 +144,7 @@ class PaperTrader:
             slm = min(max(float(decision.get("sl_multiplier", 1.0)), b.sl_multiplier_bounds[0]), b.sl_multiplier_bounds[1])
             tpm = min(max(float(decision.get("tp_multiplier", 1.0)), b.tp_multiplier_bounds[0]), b.tp_multiplier_bounds[1])
             sl = sig.price - sig.direction * abs(sig.price - sig.stop_loss) * slm
-            tp = sig.price + sig.direction * abs(sig.take_profit - sig.price) * tpm
+            tp = None if sig.take_profit is None else sig.price + sig.direction * abs(sig.take_profit - sig.price) * tpm
         fill = price * (1 + sig.direction * self.cfg.fees.slippage_pct / 100.0)
         qty = self.risk.position_size(self.equity, fill, abs(fill - sl), size)
         if qty <= 0:
@@ -151,7 +156,7 @@ class PaperTrader:
             signal={"side": sig.side, "reasons": sig.reasons, "features": sig.features, "time": sig.time.isoformat()},
             entry_time=datetime.now(timezone.utc).isoformat(), entry_price=fill, qty=qty, stop_loss=sl,
             take_profit=tp, entry_fee=fee, bars_held=0, decision=decision)
-        self._log(f"ENTRADA {sig.side} @ {fill:.2f} qty={qty:.5f} sl={sl:.2f} tp={tp:.2f} | {', '.join(sig.reasons)}")
+        self._log(f"ENTRADA {sig.side} @ {fill:.2f} qty={qty:.5f} sl={sl:.2f} tp={'móvil' if tp is None else f'{tp:.2f}'} | {', '.join(sig.reasons)}")
         self._save_state()
 
     def step(self) -> None:
@@ -169,6 +174,15 @@ class PaperTrader:
             self.position.bars_held += 1
             self._check_exit(price, now)
         df = self.strategy.prepare(df_raw)
+        if self.position is not None:
+            d = 1 if self.position.signal["side"] == "long" else -1
+            if hasattr(self.strategy, "should_exit") and self.strategy.should_exit(df, len(df) - 1, d, self.position.entry_price):
+                self._force_exit(price, now, "signal_exit")
+            elif hasattr(self.strategy, "trail_stop"):
+                ns = self.strategy.trail_stop(df, len(df) - 1, d, self.position.entry_price, self.position.stop_loss)
+                if ns is not None and ((d > 0 and ns > self.position.stop_loss) or (d < 0 and ns < self.position.stop_loss)):
+                    self.position.stop_loss = float(ns)
+                    self._log(f"stop móvil -> {ns:.2f}")
         if self.position is None:
             sig = self.strategy.signal_at(df, len(df) - 1)
             if sig is not None:

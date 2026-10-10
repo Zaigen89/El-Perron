@@ -31,7 +31,7 @@ class OpenPosition:
     entry_price: float
     qty: float
     stop_loss: float
-    take_profit: float
+    take_profit: float | None
     entry_fee: float
     decision: dict | None
 
@@ -64,7 +64,7 @@ class Backtester:
         slm = min(max(float(decision.get("sl_multiplier", 1.0)), b.sl_multiplier_bounds[0]), b.sl_multiplier_bounds[1])
         tpm = min(max(float(decision.get("tp_multiplier", 1.0)), b.tp_multiplier_bounds[0]), b.tp_multiplier_bounds[1])
         sl = sig.price - sig.direction * abs(sig.price - sig.stop_loss) * slm
-        tp = sig.price + sig.direction * abs(sig.take_profit - sig.price) * tpm
+        tp = None if sig.take_profit is None else sig.price + sig.direction * abs(sig.take_profit - sig.price) * tpm
         return size, sl, tp
 
     def run(self, raw: pd.DataFrame) -> BacktestResult:
@@ -100,7 +100,7 @@ class Backtester:
                     risk.register_entry(t)
                     pos = OpenPosition(sig, i, t, fill, qty, sl, tp, fee, decision)
                     if self.verbose:
-                        print(f"{t} ENTRADA {sig.side} @ {fill:.2f} qty={qty:.5f} sl={sl:.2f} tp={tp:.2f}")
+                        print(f"{t} ENTRADA {sig.side} @ {fill:.2f} qty={qty:.5f} sl={sl:.2f} tp={'móvil' if tp is None else f'{tp:.2f}'}")
 
             # 2) Gestionar posición abierta en esta vela
             if pos is not None and i > pos.entry_index:
@@ -108,11 +108,14 @@ class Backtester:
                 exit_price = None
                 reason = None
                 hit_sl = lows[i] <= pos.stop_loss if d > 0 else highs[i] >= pos.stop_loss
-                hit_tp = highs[i] >= pos.take_profit if d > 0 else lows[i] <= pos.take_profit
+                has_tp = pos.take_profit is not None and not pd.isna(pos.take_profit)
+                hit_tp = has_tp and (highs[i] >= pos.take_profit if d > 0 else lows[i] <= pos.take_profit)
                 if hit_sl:
                     exit_price, reason = pos.stop_loss, "stop_loss"
                 elif hit_tp:
                     exit_price, reason = pos.take_profit, "take_profit"
+                elif hasattr(self.strategy, "should_exit") and self.strategy.should_exit(df, i, d, pos.entry_price):
+                    exit_price, reason = closes[i], "signal_exit"
                 elif i - pos.entry_index >= cfg.strategy.max_bars_in_trade:
                     exit_price, reason = closes[i], "time_exit"
                 elif i == len(df) - 1:
@@ -126,13 +129,18 @@ class Backtester:
                     risk.register_exit(t, pnl, i)
                     self.journal.add(Trade(
                         entry_time=pos.entry_time.isoformat(), exit_time=t.isoformat(), side=pos.signal.side,
-                        entry_price=pos.entry_price, exit_price=fill, qty=pos.qty, stop_loss=pos.stop_loss,
-                        take_profit=pos.take_profit, pnl=pnl, pnl_pct=pnl / (pos.entry_price * pos.qty) * 100.0,
+                        entry_price=pos.entry_price, exit_price=fill, qty=pos.qty, stop_loss=pos.signal.stop_loss,
+                        take_profit=pos.take_profit if pos.take_profit is not None else float("nan"), pnl=pnl, pnl_pct=pnl / (pos.entry_price * pos.qty) * 100.0,
                         fees=fee + pos.entry_fee, exit_reason=reason, bars_held=i - pos.entry_index,
                         reasons=pos.signal.reasons, features=pos.signal.features, llm=pos.decision))
                     if self.verbose:
                         print(f"{t} SALIDA {reason} @ {fill:.2f} pnl={pnl:.2f} equity={equity:.2f}")
                     pos = None
+                elif hasattr(self.strategy, "trail_stop"):
+                    # Stop móvil: solo puede acercarse al precio, nunca alejarse. Se actualiza al cierre.
+                    new_stop = self.strategy.trail_stop(df, i, d, pos.entry_price, pos.stop_loss)
+                    if new_stop is not None and ((d > 0 and new_stop > pos.stop_loss) or (d < 0 and new_stop < pos.stop_loss)):
+                        pos.stop_loss = float(new_stop)
 
             equity_points.append((t, equity))
 

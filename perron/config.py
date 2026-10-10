@@ -66,6 +66,13 @@ class StrategyConfig:
     max_dist_vwap_pct: float = 0.35  # no entrar extendido respecto al VWAP
     rsi_pb_low: float = 35.0       # RSI mínimo en el retroceso (long)
     rsi_pb_high: float = 60.0      # RSI máximo en el retroceso (long)
+    # --- trend_follow_v4 (4h / 1d) ---
+    donchian_entry: int = 20       # entrada: cierre sobre el máximo de N velas
+    donchian_exit: int = 10        # salida: cierre bajo el mínimo de N velas
+    trail_atr: float = 3.0         # stop móvil a N ATR del máximo alcanzado
+    initial_stop_atr: float = 2.0  # stop inicial en ATR
+    long_only: bool = False        # BTC: los shorts en tendencia suelen rendir peor
+    regime_ema: int = 100          # solo long si cierre > EMA(N) (0 = sin filtro de régimen)
 
 
 @dataclass

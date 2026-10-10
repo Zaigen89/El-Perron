@@ -1,11 +1,13 @@
 from ..config import Config
 from .base import Signal, Strategy
 from .scalping import ScalpingStrategy
+from .trend_follow import TrendFollowStrategy
 from .value_pullback import ValuePullbackStrategy
 
 REGISTRY = {
     "scalping_pullback_v2": ScalpingStrategy,
     "value_pullback_v3": ValuePullbackStrategy,
+    "trend_follow_v4": TrendFollowStrategy,
 }
 
 
@@ -18,4 +20,4 @@ def build_strategy(cfg: Config, name: str | None = None):
                          round_trip_cost_pct=cfg.fees.round_trip_fraction * 100.0)
 
 
-__all__ = ["Signal", "Strategy", "ScalpingStrategy", "ValuePullbackStrategy", "REGISTRY", "build_strategy"]
+__all__ = ["Signal", "Strategy", "ScalpingStrategy", "ValuePullbackStrategy", "TrendFollowStrategy", "REGISTRY", "build_strategy"]

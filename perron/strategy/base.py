@@ -13,7 +13,7 @@ class Signal:
     direction: int            # +1 long, -1 short
     price: float              # cierre de la vela de señal
     stop_loss: float
-    take_profit: float
+    take_profit: float | None
     atr: float
     reasons: list[str] = field(default_factory=list)
     features: dict = field(default_factory=dict)

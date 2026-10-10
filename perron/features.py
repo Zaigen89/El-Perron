@@ -49,7 +49,7 @@ def resample_ohlcv(df: pd.DataFrame, rule: str) -> pd.DataFrame:
 def _pandas_rule(interval: str) -> str:
     unit = interval[-1]
     num = interval[:-1]
-    return {"m": f"{num}min", "h": f"{num}h", "d": f"{num}D"}[unit]
+    return {"m": f"{num}min", "h": f"{num}h", "d": f"{num}D", "w": f"{num}W"}[unit]
 
 
 def add_features(df: pd.DataFrame, cfg: StrategyConfig, trend_interval: str = "5m") -> pd.DataFrame:

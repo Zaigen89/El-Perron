@@ -69,6 +69,7 @@ perron/
   data/synthetic.py  velas inventadas para probar sin red
   features.py        EMA, RSI, ATR, VWAP de sesión, volumen relativo, tendencia 5m sin mirar al futuro
   strategy/value_pullback.py  v3: retroceso a valor en tendencia, stop estructural (por defecto)
+  strategy/trend_follow.py    v4: Donchian + stop móvil ATR para 4h/1d (configs/trend_*.yaml)
   strategy/scalping.py        v2: ruptura tras retroceso (referencia, sin ventaja en datos reales)
   backtest/validate.py        validación IS/OOS y barrido de parámetros
   diagnose.py / analyze.py    volatilidad vs comisiones; ¿hay ventaja o es ruido?
@@ -101,6 +102,20 @@ Es el ejemplo de por qué el stop no puede estar dentro del ruido y por qué no 
 
 Entrada siempre en la apertura de la vela siguiente a la señal. Si en una vela se tocan stop y objetivo, se
 asume el stop (conservador).
+
+**`trend_follow_v4`.** Seguimiento de tendencia en 4 horas o diario (`configs/trend_4h.yaml`, `configs/trend_1d.yaml`).
+Entrada al cerrar sobre el máximo de 20 velas con filtro de régimen (EMA100), stop inicial de 2 ATR, stop móvil a
+3 ATR del máximo alcanzado, salida al cerrar bajo el mínimo de 10 velas. Sin objetivo fijo: se deja correr la tendencia.
+Motivo: el estudio de eventos sobre 180 días de 15m mostró que a horizontes de minutos a pocas horas ninguna señal
+simple predice el precio de BTC; la única fuente de retorno observable es la deriva de tendencias de días y semanas,
+donde además las comisiones dejan de importar (ATR de 1% a 3% contra 0.1% de costo). Requiere años de datos:
+
+```bash
+python -m perron fetch --interval 4h --days 2000
+python -m perron fetch --interval 1d --days 3000
+python -m perron --config configs/trend_4h.yaml backtest --oos-days 365
+python -m perron --config configs/trend_1d.yaml backtest --oos-days 365
+```
 
 ### Validar sin engañarse
 

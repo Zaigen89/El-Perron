@@ -1,0 +1,30 @@
+# Seguimiento de tendencia diario. Uso: python -m perron --config configs/trend_1d.yaml backtest
+symbol: BTCUSDT
+interval: 1d
+trend_interval: 1w
+data: {base_url: https://api.binance.com, dir: data}
+capital: {initial: 10000.0}
+fees: {taker_pct: 0.04, slippage_pct: 0.01}
+strategy:
+  name: trend_follow_v4
+  donchian_entry: 20      # 20 días
+  donchian_exit: 10
+  trail_atr: 3.0
+  initial_stop_atr: 2.0
+  long_only: false
+  regime_ema: 100         # ~ media de 100 días
+  atr_period: 14
+  atr_min_pct: 0.5
+  atr_max_pct: 10.0
+  max_bars_in_trade: 500  # sin salida por tiempo en la práctica
+  volume_min_ratio: 0.0
+  min_tp_cost_ratio: 0.0
+risk:
+  risk_per_trade_pct: 1.0
+  max_position_pct: 100.0
+  max_daily_loss_pct: 100.0   # en swing no aplica el límite diario
+  max_trades_per_day: 5
+  cooldown_bars_after_loss: 0
+llm: {enabled: false, model: claude-opus-5-5, effort: low, max_calls_per_run: 200, context_bars: 30,
+      knowledge_dir: knowledge, memory_dir: memory, cache: true}
+paper: {poll_seconds: 60, log_dir: memory}

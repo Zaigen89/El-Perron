@@ -15,9 +15,9 @@ from .config import Config
 from .features import add_features, resample_ohlcv
 from .strategy import REGISTRY
 
-_RULE = {"1m": "1min", "3m": "3min", "5m": "5min", "15m": "15min", "30m": "30min", "1h": "1h", "4h": "4h"}
-_TREND_FOR = {"1m": "5m", "3m": "15m", "5m": "15m", "15m": "1h", "30m": "2h", "1h": "4h"}
-_MINUTES = {"1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30, "1h": 60}
+_RULE = {"1m": "1min", "3m": "3min", "5m": "5min", "15m": "15min", "30m": "30min", "1h": "1h", "4h": "4h", "1d": "1D"}
+_TREND_FOR = {"1m": "5m", "3m": "15m", "5m": "15m", "15m": "1h", "30m": "2h", "1h": "4h", "4h": "1d", "1d": "1w"}
+_MINUTES = {"1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440}
 
 
 def _funnel(df: pd.DataFrame, cfg: Config, trend_interval: str, cost_pct: float) -> dict:
@@ -30,7 +30,7 @@ def _funnel(df: pd.DataFrame, cfg: Config, trend_interval: str, cost_pct: float)
     out["atr_pct_p10"] = float(atr.quantile(0.10))
     out["atr_pct_p50"] = float(atr.quantile(0.50))
     out["atr_pct_p90"] = float(atr.quantile(0.90))
-    tp_mult = c.rr * c.min_stop_atr if c.name == "value_pullback_v3" else c.tp_atr
+    tp_mult = {"value_pullback_v3": c.rr * c.min_stop_atr, "trend_follow_v4": c.trail_atr}.get(c.name, c.tp_atr)
     out["atr_min_requerido_por_costo"] = c.min_tp_cost_ratio * cost_pct / tp_mult
     out["pct_velas_atr_en_rango"] = float(((atr >= c.atr_min_pct) & (atr <= c.atr_max_pct)).mean() * 100)
     out["pct_velas_atr_cubre_costo"] = float((atr >= out["atr_min_requerido_por_costo"]).mean() * 100)
@@ -53,10 +53,10 @@ def _funnel(df: pd.DataFrame, cfg: Config, trend_interval: str, cost_pct: float)
 def diagnose(df: pd.DataFrame, cfg: Config, intervals: list[str] | None = None) -> str:
     base = cfg.interval
     cost_pct = cfg.fees.round_trip_fraction * 100.0
-    intervals = intervals or [base] + [i for i in ["5m", "15m", "30m", "1h"] if _MINUTES[i] > _MINUTES[base]]
+    intervals = intervals or [base] + [i for i in ["5m", "15m", "30m", "1h", "4h", "1d"] if _MINUTES[i] > _MINUTES[base]]
     days = (df.index[-1] - df.index[0]).total_seconds() / 86400.0
     c = cfg.strategy
-    tp_mult = c.rr * c.min_stop_atr if c.name == "value_pullback_v3" else c.tp_atr
+    tp_mult = {"value_pullback_v3": c.rr * c.min_stop_atr, "trend_follow_v4": c.trail_atr}.get(c.name, c.tp_atr)
     lines = [f"=== Diagnóstico de {cfg.symbol} | {c.name} | {days:.1f} días | costo ida y vuelta {cost_pct:.3f}% ===",
              f"Filtro de costo: objetivo mínimo ({tp_mult:g} ATR) >= {c.min_tp_cost_ratio}x costo "
              f"=> ATR% mínimo {c.min_tp_cost_ratio * cost_pct / tp_mult:.3f}%", ""]
