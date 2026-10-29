@@ -1,0 +1,130 @@
+# Perfil de búsqueda de 100 Modos. Edítalo libremente: es lo que decide qué licitaciones aparecen.
+# Las palabras se comparan sin tildes ni mayúsculas, al inicio de palabra:
+# "capacitaci" calza con capacitación y capacitaciones; "lider" con líder, liderazgo y liderar.
+
+# Qué TIPO de servicio buscan (al menos uno debe aparecer, o una categoría de abajo)
+formato:
+  - capacitaci
+  - taller
+  - charla
+  - curso
+  - jornada
+  - seminario
+  - conferencia
+  - workshop
+  - coaching
+  - formacion
+  - entrenamiento
+  - intervencion
+  - outdoor
+  - relator
+  - facilitad
+  - encuentro
+  - diplomado
+
+# Qué TEMAS les calzan (al menos uno debe aparecer)
+temas:
+  - lider
+  - trabajo en equipo
+  - trabajo colaborativo
+  - equipos de trabajo
+  - comunicacion efectiva
+  - comunicacion asertiva
+  - asertiv
+  - habilidades blandas
+  - habilidades socio
+  - habilidades directivas
+  - competencias transversales
+  - clima laboral
+  - clima organizacional
+  - cultura organizacional
+  - desarrollo organizacional
+  - gestion del cambio
+  - resolucion de conflictos
+  - manejo de conflictos
+  - negociacion
+  - motivacion
+  - bienestar
+  - autocuidado
+  - cuidado de equipos
+  - salud mental
+  - estres
+  - burnout
+  - riesgos psicosociales
+  - buen trato
+  - convivencia
+  - team building
+  - cohesion
+  - inteligencia emocional
+  - mindfulness
+  - felicidad
+  - engagement
+  - ley karin
+  - acoso laboral
+  - inclusion
+  - diversidad
+  - planificacion estrategica
+  - innovacion
+  - creatividad
+  - gestion de personas
+  - retroalimentacion
+  - feedback
+  - jefaturas
+  - mentoring
+  - atencion de usuarios
+  - atencion al usuario
+  - trato al usuario
+
+# Si alguna de estas aparece en el NOMBRE, se descarta (cosas que no hacen o que no son servicio)
+excluir:
+  - excel
+  - office
+  - computaci
+  - software
+  - programacion
+  - sap
+  - grua
+  - horquilla
+  - conduccion
+  - licencia de conducir
+  - soldad
+  - electric
+  - primeros auxilios
+  - manipulacion de alimentos
+  - ingles
+  - idioma
+  - contabilidad
+  - tributari
+  - taller mecanic
+  - colacion
+  - coffee
+  - banquet
+  - alimentacion
+  - alojamiento
+  - pasajes
+  - traslado
+  - arriendo
+
+# Códigos de categoría (UNSPSC) de Mercado Público: un ítem cuyo código empiece con estos suma puntos.
+# Son de referencia: revísalos contra licitaciones reales y ajusta.
+categorias_unspsc:
+  - "8610"     # formación profesional
+  - "8611"     # educación de adultos / sistemas alternativos
+  - "8613"     # educación especializada (incluye formación en gestión)
+  - "801115"   # desarrollo de recursos humanos
+
+# Regiones donde pueden trabajar (vacío = todas). Ej.: ["metropolitana", "valparaiso"]
+regiones: []
+
+# Montos en pesos (0 = sin límite). Muchas licitaciones no informan monto; esas no se descartan.
+monto_minimo: 0
+monto_maximo: 0
+
+# Descarta las que cierran antes de estos días (no alcanza a preparar la oferta)
+dias_minimos_para_preparar: 3
+
+# Cuántas pedir en detalle a la API por corrida (las nuevas que pasan el primer filtro por nombre)
+max_detalles_por_corrida: 300
+
+# Cuántas mostrar en el resumen
+max_en_resumen: 25

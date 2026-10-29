@@ -1,0 +1,19 @@
+{
+  "model": "sonnet",
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python -m licitaciones:*)",
+      "Bash(grep:*)",
+      "Read(salida/**)",
+      "Read(ofertas/**)",
+      "Read(config/**)",
+      "Read(plantillas/**)",
+      "Write(ofertas/**)",
+      "Edit(ofertas/**)"
+    ],
+    "deny": [
+      "Read(datos/**)",
+      "Read(.env)"
+    ]
+  }
+}

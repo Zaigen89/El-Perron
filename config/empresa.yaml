@@ -1,0 +1,53 @@
+# Datos fijos de 100 Modos para armar ofertas. Claude los usa tal cual y NUNCA inventa lo que falte:
+# todo lo que diga COMPLETAR aparecerá en la oferta como [COMPLETAR: ...] para que lo llenes a mano.
+# Entre más completo esté este archivo, mejores ofertas y menos ida y vuelta (menos tokens).
+
+razon_social: COMPLETAR
+nombre_fantasia: 100 Modos
+rut: COMPLETAR
+giro: COMPLETAR
+direccion: COMPLETAR
+representante_legal:
+  nombre: COMPLETAR
+  rut: COMPLETAR
+contacto:
+  nombre: COMPLETAR
+  correo: COMPLETAR
+  telefono: COMPLETAR
+sitio_web: COMPLETAR
+inscrita_registro_proveedores: COMPLETAR   # sí/no (ChileProveedores)
+sence: COMPLETAR                           # ¿es OTEC acreditada SENCE? sí/no. Muchas capacitaciones lo exigen
+
+propuesta_de_valor: |
+  COMPLETAR: 3-5 líneas con lo que hace distinta a 100 Modos (copiar de su sitio web).
+
+servicios:
+  - nombre: COMPLETAR (ej. Taller de trabajo en equipo)
+    descripcion: COMPLETAR
+    temas: []
+    duracion_tipica: COMPLETAR (ej. 4 horas / 2 sesiones de 3 horas)
+    modalidad: COMPLETAR (presencial / online / mixta)
+    participantes_por_grupo: COMPLETAR
+    precio_referencia: COMPLETAR   # neto, por sesión u hora; solo lo usa para la oferta económica
+
+metodologia: |
+  COMPLETAR: cómo trabajan (diagnóstico, enfoque experiencial, evaluación de reacción/aprendizaje, informe final...).
+
+equipo:
+  - nombre: COMPLETAR
+    rol: Relator(a) / Facilitador(a)
+    formacion: COMPLETAR (título, postítulos)
+    experiencia: COMPLETAR (años y tipo de experiencia)
+
+experiencia_previa:   # clave para puntaje: muchas bases piden experiencia comprobable con órdenes de compra o certificados
+  - cliente: COMPLETAR
+    anio: COMPLETAR
+    servicio: COMPLETAR
+    participantes: COMPLETAR
+    respaldo: COMPLETAR (OC, certificado, carta de recomendación)
+
+diferenciadores:
+  - COMPLETAR
+
+documentos_disponibles:   # lo que ya tienen listo para adjuntar
+  - COMPLETAR (ej. CV relatores, certificados de experiencia, certificado SENCE)
