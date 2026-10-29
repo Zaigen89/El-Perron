@@ -5,7 +5,7 @@ Están pensados para gastar pocos tokens: solo los campos útiles, sin el JSON c
 from datetime import datetime
 
 from .api import FICHA_URL
-from .filtro import fecha
+from .filtro import fecha, fecha_cierre
 
 FECHAS = [
     ("FechaPublicacion", "Publicación"),
@@ -16,6 +16,9 @@ FECHAS = [
     ("FechaActoAperturaTecnica", "Apertura técnica"),
     ("FechaEstimadaAdjudicacion", "Adjudicación estimada"),
 ]
+
+
+UNIDADES_TIEMPO = {"1": "horas", "2": "días", "3": "semanas", "4": "meses", "5": "años"}
 
 
 def _f(valor):
@@ -45,7 +48,7 @@ def resumen(filas, hoy=None):
     lineas.append(f"{len(filas)} licitaciones, de más a menos afines. Para preparar una: `/oferta CODIGO` en Claude Code.")
     for fila, det in filas:
         comprador = det.get("Comprador") or {}
-        cierre = fecha(det.get("FechaCierre"))
+        cierre = fecha_cierre(det)
         dias = f" (en {(cierre - hoy).days} días)" if cierre else ""
         nueva = " 🆕" if (fila["visto_primera_vez"] or "")[:10] == hoy.strftime("%Y-%m-%d") else ""
         lineas += [
@@ -53,7 +56,7 @@ def resumen(filas, hoy=None):
             f"## {fila['puntos']:.0f} pts · {det.get('Nombre')}{nueva}",
             f"- Código: `{fila['codigo']}` · Tipo {det.get('Tipo') or '—'} · Monto: {_monto(det)}",
             f"- Comprador: {comprador.get('NombreOrganismo') or '—'} ({comprador.get('RegionUnidad') or '—'})",
-            f"- Cierre: {_f(det.get('FechaCierre'))}{dias}",
+            f"- Cierre: {cierre.strftime('%d-%m-%Y %H:%M') if cierre else '—'}{dias}",
             f"- Por qué: {fila['motivos']}",
             f"- {_limpio(det.get('Descripcion'), 280)}",
             f"- Ficha: {FICHA_URL.format(codigo=fila['codigo'])}",
@@ -78,15 +81,17 @@ def ficha(detalle):
         "## Fechas",
     ]
     for clave, etiqueta in FECHAS:
-        valor = fechas.get(clave) or (detalle.get(clave) if clave == "FechaCierre" else None)
+        valor = fechas.get(clave) or detalle.get(clave)
         if valor:
             lineas.append(f"- {etiqueta}: {_f(valor)}")
     extras = [
-        ("Duración del contrato", detalle.get("TiempoDuracionContrato") and
-         f"{detalle.get('TiempoDuracionContrato')} {detalle.get('UnidadTiempoDuracionContrato') or ''}"),
-        ("Visita a terreno obligatoria", detalle.get("VisitaTerreno") and "sí"),
+        ("Duración del contrato", str(detalle.get("TiempoDuracionContrato") or "0").strip() not in ("", "0") and
+         f"{detalle.get('TiempoDuracionContrato')} "
+         f"{UNIDADES_TIEMPO.get(str(detalle.get('UnidadTiempoDuracionContrato')), '')}"),
+        ("Visita a terreno", detalle.get("DireccionVisita") or (fechas.get("FechaVisitaTerreno") and "sí, ver fecha")),
         ("Subcontratación permitida", detalle.get("SubContratacion") in (1, "1", True) and "sí"),
-        ("Garantía de seriedad", detalle.get("MontoGarantiaSeriedad") or None),
+        ("Fuente de financiamiento", detalle.get("FuenteFinanciamiento")),
+        ("Inhabilidades / prohibiciones", detalle.get("ProhibicionContratacion")),
         ("Contacto", detalle.get("NombreResponsableContrato") or detalle.get("NombreResponsablePago")),
     ]
     extras = [(k, v) for k, v in extras if v]

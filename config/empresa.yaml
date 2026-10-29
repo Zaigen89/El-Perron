@@ -3,7 +3,7 @@
 # Entre más completo esté este archivo, mejores ofertas y menos ida y vuelta (menos tokens).
 
 razon_social: COMPLETAR
-nombre_fantasia: 100 Modos
+nombre_fantasia: 100 Modos (100MODOS)
 rut: COMPLETAR
 giro: COMPLETAR
 direccion: COMPLETAR
@@ -12,32 +12,101 @@ representante_legal:
   rut: COMPLETAR
 contacto:
   nombre: COMPLETAR
-  correo: COMPLETAR
+  correo: hola@100modos.cl
   telefono: COMPLETAR
-sitio_web: COMPLETAR
+sitio_web: https://www.100modos.cl
 inscrita_registro_proveedores: COMPLETAR   # sí/no (ChileProveedores)
 sence: COMPLETAR                           # ¿es OTEC acreditada SENCE? sí/no. Muchas capacitaciones lo exigen
 
+# Fuente: www.100modos.cl (revisar y ajustar)
 propuesta_de_valor: |
-  COMPLETAR: 3-5 líneas con lo que hace distinta a 100 Modos (copiar de su sitio web).
+  Transformamos estrategia en resultados. Consultora estratégica especializada en transformar organizaciones
+  desde la ejecución: acompañamos a empresas e instituciones a ordenar su operación, alinear equipos y
+  ejecutar con excelencia para generar resultados sostenibles. No somos asesoras convencionales, somos
+  ejecutoras: combinamos la estrategia de alta dirección con la ejecución real en terreno, y transferimos
+  metodologías y capacidades para que los equipos alcancen autonomía ("transferencia, no dependencia").
 
+principios:
+  - "Apertura radical: acceso total a procesos, números y dolores reales desde el día uno"
+  - "Corresponsabilidad: co-responsables de que las cosas pasen (accountability partners reales)"
+  - "Transferencia, no dependencia: nuestro éxito es la autosuficiencia operativa del cliente"
+  - "Cero basura: soluciones pragmáticas, sin relleno teórico"
+
+areas: [Estrategia, Excelencia operacional, Implementación, Personas y liderazgo, Analítica y control]
+
+clientes_objetivo:
+  empresas: [PYMEs en crecimiento, empresas medianas, corporativos y grupos empresariales, startups y scale-ups]
+  instituciones: [municipios y gobiernos locales, servicios públicos, universidades y centros educativos, fundaciones y corporaciones]
+  personas: [líderes y gerencias, equipos de trabajo, emprendedores, mandos medios]
+
+# Completar en cada servicio: duracion_tipica, modalidad, participantes_por_grupo y precio_referencia (neto)
 servicios:
-  - nombre: COMPLETAR (ej. Taller de trabajo en equipo)
-    descripcion: COMPLETAR
-    temas: []
-    duracion_tipica: COMPLETAR (ej. 4 horas / 2 sesiones de 3 horas)
-    modalidad: COMPLETAR (presencial / online / mixta)
-    participantes_por_grupo: COMPLETAR
-    precio_referencia: COMPLETAR   # neto, por sesión u hora; solo lo usa para la oferta económica
+  # Unidad Consultoría Senior: intervención profunda, reingeniería de procesos en terreno y Fractional Management
+  - nombre: Diagnóstico Profundo In Situ ("La Lupa")
+    unidad: Consultoría Senior
+    descripcion: Diagnóstico de 30 días que analiza procesos, área comercial y cultura organizacional; expone ineficiencias sin relleno teórico.
+    duracion_tipica: 30 días
+    precio_referencia: COMPLETAR
+  - nombre: Implementación y rediseño de procesos
+    unidad: Consultoría Senior
+    descripcion: Simplificación de flujos complejos y eliminación de tareas redundantes que no aportan valor al margen.
+    precio_referencia: COMPLETAR
+  - nombre: Accountability Partner — Alta Dirección a Tiempo Parcial
+    unidad: Consultoría Senior
+    descripcion: Ejecución estratégica de forma flexible (fractional management), protegiendo los costos fijos.
+    precio_referencia: COMPLETAR
+  - nombre: Analítica y Control Operacional
+    unidad: Consultoría Senior
+    descripcion: Sistemas de medición y dashboards de KPIs activos (p. ej. OTIF) con acompañamiento preventivo mensual para sostener resultados.
+    precio_referencia: COMPLETAR
+  # Unidad Level Up: academia; transfiere capacidades metodológicas para la autogestión
+  # Formatos: charlas, cursos prácticos, programas in company, certificaciones y talleres, mentorías ejecutivas
+  - nombre: Masterclass Directiva "Sincronía del Negocio"
+    unidad: Level Up
+    descripcion: Resuelve el quiebre en que Ventas cierra contratos que Operaciones no puede cumplir rentablemente.
+    precio_referencia: COMPLETAR
+  - nombre: Workshop In-Company "Rendimiento Autónomo"
+    unidad: Level Up
+    descripcion: Metodologías ágiles de control y priorización para eliminar el micromanagement interdepartamental.
+    precio_referencia: COMPLETAR
+  - nombre: Taller "Operación Cero Incendios" (eleva tu negocio)
+    unidad: Level Up
+    descripcion: 4 sesiones tácticas para estandarizar los 3 procesos críticos que más tiempo le roban al dueño; se construye un Mini-Playbook.
+    duracion_tipica: 4 sesiones
+    precio_referencia: COMPLETAR
+  - nombre: Recursos para la eficiencia "Encuentra tu Modo"
+    unidad: Level Up
+    descripcion: Termómetro de Recursos y autodiagnóstico "Prueba del Completo" para emprendedores y pymes.
+  - nombre: Programa a medida
+    unidad: Level Up / Consultoría
+    descripcion: Diseño personalizado de un programa para la organización cuando ninguno estándar calza.
+    precio_referencia: COMPLETAR
 
 metodologia: |
-  COMPLETAR: cómo trabajan (diagnóstico, enfoque experiencial, evaluación de reacción/aprendizaje, informe final...).
+  Diagnóstico in situ ("La Lupa") de procesos, área comercial y cultura -> hoja de ruta que alinea ventas con
+  procesos -> intervención y acompañamiento en terreno que transforma la estrategia en hábitos operativos ->
+  sistemas de medición (KPIs) y acompañamiento para sostener resultados -> transferencia de capacidades para
+  que el equipo quede autónomo. Herramienta propia: Diagnóstico Sincronía (36 afirmaciones sobre procesos,
+  comercial y cultura).
+  COMPLETAR: cómo evalúan los talleres (reacción/aprendizaje), entregables e informe final.
 
 equipo:
-  - nombre: COMPLETAR
-    rol: Relator(a) / Facilitador(a)
-    formacion: COMPLETAR (título, postítulos)
-    experiencia: COMPLETAR (años y tipo de experiencia)
+  - nombre: Giovanna Hernández
+    rol: Socia fundadora
+    formacion: Ingeniera en Marketing; Magíster en Coaching Directivo
+    experiencia: >-
+      Más de 10 años en estrategias corporativas y transformación digital. Especialista en "La Lupa"
+      metodológica: detectar fugas de dinero, eliminar la ceguera operativa y diseñar hojas de ruta que
+      alinean ventas con procesos estratégicos.
+    rut: COMPLETAR
+  - nombre: Ivisa Rubio
+    rol: Socia fundadora
+    formacion: Cientista política; experta en comunicaciones estratégicas
+    experiencia: >-
+      Gestión de proyectos y alianzas; liderazgo, desarrollo de capacidades y mentorías. Especialista en
+      intervención y acompañamiento en terreno, transformando estrategias en hábitos operativos.
+      COMPLETAR: años de experiencia.
+    rut: COMPLETAR
 
 experiencia_previa:   # clave para puntaje: muchas bases piden experiencia comprobable con órdenes de compra o certificados
   - cliente: COMPLETAR

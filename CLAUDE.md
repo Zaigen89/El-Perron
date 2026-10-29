@@ -1,7 +1,9 @@
 # Licitaciones 100 Modos
 
-Herramienta para encontrar licitaciones de Mercado Público (Chile) que calzan con 100 Modos
-(charlas, talleres y capacitaciones para equipos y organizaciones) y preparar ofertas.
+Herramienta para encontrar licitaciones de Mercado Público (Chile) que calzan con 100 Modos y preparar ofertas.
+100 Modos (www.100modos.cl) es una consultora estratégica con dos unidades: Consultoría Senior (diagnóstico,
+rediseño de procesos, KPIs, alta dirección a tiempo parcial) y Level Up (charlas, cursos, talleres, programas
+in company y mentorías en estrategia, procesos, liderazgo y equipos).
 
 ## Reglas para ahorrar tokens (importante)
 - El trabajo mecánico lo hace Python: `.venv/bin/python -m licitaciones <comando>`. No lo repliques a mano.

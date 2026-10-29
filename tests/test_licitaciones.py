@@ -31,7 +31,7 @@ def detalle(nombre, descripcion="", dias=10, region="Región Metropolitana de Sa
 
 
 def test_perfil_y_empresa_son_yaml_validos():
-    assert config.cargar_perfil()["formato"]
+    assert config.cargar_perfil()["formato_capacitacion"]
     assert yaml.safe_load((config.CONFIG / "empresa.yaml").read_text(encoding="utf-8"))["nombre_fantasia"]
 
 
@@ -40,6 +40,11 @@ def test_calza_capacitacion_de_liderazgo(filtro):
         detalle("Capacitación en Liderazgo y Trabajo en Equipo para jefaturas"), hoy=HOY)
     assert descarte is None and puntos >= 10
     assert any("lider" in m for m in motivos)
+
+
+def test_calza_consultoria_de_procesos_e_indicadores(filtro):
+    det = detalle("Consultoría para rediseño de procesos y diseño de indicadores de gestión", categoria="80101500")
+    assert filtro.evaluar(det, hoy=HOY)[2] is None
 
 
 def test_descarta_tecnicas_cerradas_y_sin_tema(filtro):
@@ -52,9 +57,13 @@ def test_descarta_tecnicas_cerradas_y_sin_tema(filtro):
 
 def test_tildes_y_mayusculas_no_importan(filtro):
     assert filtro.interesa_por_nombre("JORNADA DE AUTOCUIDADO Y SALUD MENTAL")
-    assert filtro.interesa_por_nombre("Capacitacion Ley Karin")
+    assert filtro.interesa_por_nombre("Capacitación Cursos Team Building 2026")
+    assert filtro.interesa_por_nombre("GESTIÓN DEL CAMBIO ORGANIZACIONAL PARA LÍDERES")
+    assert not filtro.interesa_por_nombre("ASESORÍA A LA INSPECCIÓN FISCAL CONSERVACION RUTINARIA AERÓDROMO")
+    assert not filtro.interesa_por_nombre("Consultoría de diseño construcción piscina")
     assert not filtro.interesa_por_nombre("Compra de neumáticos")
     assert not filtro.interesa_por_nombre("Servicio de coffee break para jornada de liderazgo")
+    assert not filtro.interesa_por_nombre("PROCEDIMIENTOS ENDOVASCULARES DIAGNOSTICOS")
 
 
 def test_region_y_monto():
@@ -108,6 +117,8 @@ def test_bd_y_resumen(tmp_path):
     base.guardar_evaluacion("1234-56-LE26", 12, ["temas: lider"], None)
     texto = informes.resumen([(base.obtener("1234-56-LE26"), base.detalle("1234-56-LE26"))], hoy=HOY)
     assert "12 pts" in texto and "1234-56-LE26" in texto and "Municipalidad de Prueba" in texto
+    real = {**det, "FechaCierre": None, "Fechas": {"FechaCierre": "2026-11-12T15:00:00"}}  # así viene en la API
+    assert "12-11-2026 15:00" in informes.resumen([(base.obtener("1234-56-LE26"), real)], hoy=HOY)
     assert "Taller para funcionarios" in informes.ficha(det)
 
 

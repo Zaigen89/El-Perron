@@ -30,10 +30,15 @@ def fecha(valor):
         return None
 
 
+def fecha_cierre(detalle):
+    return fecha(detalle.get("FechaCierre") or (detalle.get("Fechas") or {}).get("FechaCierre"))
+
+
 class Filtro:
     def __init__(self, perfil):
         self.perfil = perfil
-        self.formato = _patron(perfil.get("formato"))
+        self.formato_capacitacion = _patron(perfil.get("formato_capacitacion"))
+        self.formato = _patron((perfil.get("formato_capacitacion") or []) + (perfil.get("formato_consultoria") or []))
         self.temas = _patron(perfil.get("temas"))
         self.excluir = _patron(perfil.get("excluir"))
         self.categorias = [str(c) for c in perfil.get("categorias_unspsc") or []]
@@ -43,11 +48,15 @@ class Filtro:
         self.dias_min = perfil.get("dias_minimos_para_preparar", 0)
 
     def interesa_por_nombre(self, nombre):
-        """Primer cedazo con lo que trae el listado de activas (solo nombre). Decide si vale pedir el detalle."""
+        """Primer cedazo con lo que trae el listado de activas (solo nombre). Decide si vale pedir el detalle.
+
+        Pasa si nombra una capacitación/taller/curso (el tema suele venir en la descripción) o un tema afín.
+        Una consultoría o asesoría sin tema afín en el nombre no pasa: casi siempre es de ingeniería u obras.
+        """
         n = normalizar(nombre)
         if _coincidencias(self.excluir, n):
             return False
-        return bool(_coincidencias(self.formato, n) or _coincidencias(self.temas, n))
+        return bool(_coincidencias(self.formato_capacitacion, n) or _coincidencias(self.temas, n))
 
     def evaluar(self, detalle, hoy=None):
         """Devuelve (puntos, motivos, descarte). descarte es None si la licitación sigue en carrera."""
@@ -64,7 +73,7 @@ class Filtro:
         if excl:
             return 0, motivos, f"excluida por: {', '.join(excl)}"
 
-        cierre = fecha(detalle.get("FechaCierre") or (detalle.get("Fechas") or {}).get("FechaCierre"))
+        cierre = fecha_cierre(detalle)
         if cierre:
             dias = (cierre - hoy).total_seconds() / 86400
             if dias < 0:

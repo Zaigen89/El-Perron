@@ -1,7 +1,13 @@
 # Licitaciones 100 Modos
 
 Encuentra todos los días las licitaciones de **Mercado Público** que calzan con 100 Modos
-(charlas, talleres y capacitaciones para equipos y organizaciones) y ayuda a preparar la oferta con Claude Code.
+(consultoría en estrategia, procesos e indicadores, y charlas, talleres y capacitaciones de Level Up)
+y ayuda a preparar la oferta con Claude Code.
+
+En la primera prueba real (29-10-2026) hubo 5.018 licitaciones abiertas: 115 pasaron el filtro por nombre
+y 25 calzaron con el perfil. Entre ellas, una jornada outdoor de liderazgo y trabajo en equipo, una consultoría
+de indicadores y metas, team building, desarrollo organizacional y un programa de formación para jefaturas.
+Todo eso costó 0 tokens.
 
 ```
 API Mercado Público ──► filtro local (gratis, 0 tokens) ──► salida/resumen.md

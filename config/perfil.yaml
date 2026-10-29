@@ -1,9 +1,17 @@
-# Perfil de búsqueda de 100 Modos. Edítalo libremente: es lo que decide qué licitaciones aparecen.
+# Perfil de búsqueda de 100 Modos (www.100modos.cl). Edítalo libremente: decide qué licitaciones aparecen.
+# Dos líneas de negocio:
+#   - Consultoría Senior: diagnóstico organizacional, rediseño de procesos, alta dirección a tiempo parcial,
+#     sistemas de medición / KPIs, estrategia y ejecución.
+#   - Level Up: charlas, cursos prácticos, programas in company, talleres, certificaciones y mentorías.
+# Clientes: pymes, empresas, municipios, servicios públicos, universidades, fundaciones; líderes, mandos medios, equipos.
+#
 # Las palabras se comparan sin tildes ni mayúsculas, al inicio de palabra:
 # "capacitaci" calza con capacitación y capacitaciones; "lider" con líder, liderazgo y liderar.
 
-# Qué TIPO de servicio buscan (al menos uno debe aparecer, o una categoría de abajo)
-formato:
+# Qué TIPO de servicio buscan.
+# formato_capacitacion: basta que aparezca en el nombre para revisar la licitación (el tema suele venir en la descripción).
+# formato_consultoria: solo cuenta si además aparece un tema afín (si no, entra todo lo de ingeniería y obras).
+formato_capacitacion:
   - capacitaci
   - taller
   - charla
@@ -11,76 +19,106 @@ formato:
   - jornada
   - seminario
   - conferencia
+  - masterclass
+  - outdoor
   - workshop
   - coaching
+  - mentori
   - formacion
   - entrenamiento
-  - intervencion
-  - outdoor
+  - programa de fortalecimiento
   - relator
   - facilitad
-  - encuentro
   - diplomado
+formato_consultoria:
+  - consultori
+  - asesori
+  - acompanamiento
+  - asistencia tecnica
+  - diagnostico
+  - levantamiento
+  - estudio
+  - servicio profesional
+  - servicios profesionales
+  - elaboracion de
+  - diseno de
+  - implementacion de
+  - intervencion
 
 # Qué TEMAS les calzan (al menos uno debe aparecer)
 temas:
+  # Estrategia y ejecución
+  - estrategi
+  - planificacion estrategica
+  - plan estrategico
+  - planificacion institucional
+  - modelo de negocio
+  - rentabilidad
+  - productividad
+  - eficiencia
+  - excelencia operacional
+  - mejora continua
+  - modernizacion
+  - transformacion
+  - okr
+  # Procesos
+  - procesos
+  - rediseno
+  - flujos
+  - manual de procedimientos
+  - estructura organizacional
+  - organizacional
+  - fortalecimiento institucional
+  - gestion institucional
+  # Medición y control
+  - indicadores
+  - kpi
+  - control de gestion
+  - cuadro de mando
+  - dashboard
+  - sistema de seguimiento
+  - metas
+  # Personas y liderazgo
   - lider
+  - jefaturas
+  - mandos medios
+  - directiv
+  - alta direccion
   - trabajo en equipo
-  - trabajo colaborativo
+  - team building
+  - cohesion
+  - motivacion
   - equipos de trabajo
-  - comunicacion efectiva
-  - comunicacion asertiva
-  - asertiv
+  - trabajo colaborativo
+  - gestion del cambio
+  - gestion de personas
   - habilidades blandas
-  - habilidades socio
   - habilidades directivas
-  - competencias transversales
+  - competencias
+  - comunicacion efectiva
+  - comunicacion estrategica
   - clima laboral
   - clima organizacional
   - cultura organizacional
   - desarrollo organizacional
-  - gestion del cambio
   - resolucion de conflictos
-  - manejo de conflictos
   - negociacion
-  - motivacion
-  - bienestar
-  - autocuidado
-  - cuidado de equipos
-  - salud mental
-  - estres
-  - burnout
-  - riesgos psicosociales
-  - buen trato
-  - convivencia
-  - team building
-  - cohesion
-  - inteligencia emocional
-  - mindfulness
-  - felicidad
-  - engagement
-  - ley karin
-  - acoso laboral
-  - inclusion
-  - diversidad
-  - planificacion estrategica
-  - innovacion
-  - creatividad
-  - gestion de personas
   - retroalimentacion
-  - feedback
-  - jefaturas
-  - mentoring
-  - atencion de usuarios
-  - atencion al usuario
-  - trato al usuario
+  - gestion de proyectos
+  - alianzas
+  # Pymes y emprendimiento (Level Up "Taller eleva tu negocio")
+  - pyme
+  - microempres
+  - emprend
+  - negocio
+  - ventas
 
 # Si alguna de estas aparece en el NOMBRE, se descarta (cosas que no hacen o que no son servicio)
 excluir:
+  # capacitaciones técnicas
   - excel
   - office
   - computaci
-  - software
   - programacion
   - sap
   - grua
@@ -95,6 +133,66 @@ excluir:
   - idioma
   - contabilidad
   - tributari
+  # consultorías de ingeniería, obras y otras especialidades
+  - obra
+  - ingenieria
+  - arquitect
+  - topograf
+  - suelo
+  - pavimentac
+  - vial
+  - agua potable
+  - alcantarillado
+  - saneamiento
+  - hidraul
+  - ambiental
+  - geolog
+  - estructural
+  - inspeccion tecnica
+  - estados financieros
+  - juridic
+  - legal
+  - catastro
+  - avaluo
+  - medic
+  - clinic
+  - salud bucal
+  - laboratorio
+  - veterinari
+  # salud
+  - quirurg
+  - odontolog
+  - dental
+  - imagen
+  - endovascular
+  - biopsia
+  - antibiotic
+  # eventos, logística y otros
+  - evento
+  - productora
+  - salon
+  - cafeteria
+  - catering
+  - gira
+  - deportiv
+  - inspeccion
+  - titulos
+  - concesion
+  - otic
+  - intermediacion
+  - software
+  - plataforma
+  - solucion informatica
+  - licencias
+  - equipamiento
+  - instalacion
+  - drone
+  - cctv
+  # compras que no son servicio
+  - adquisicion de equipos
+  - compra de
+  - suministro
+  - insumos
   - taller mecanic
   - colacion
   - coffee
@@ -104,14 +202,17 @@ excluir:
   - pasajes
   - traslado
   - arriendo
+  - mantencion
+  - reparacion
 
 # Códigos de categoría (UNSPSC) de Mercado Público: un ítem cuyo código empiece con estos suma puntos.
 # Son de referencia: revísalos contra licitaciones reales y ajusta.
 categorias_unspsc:
+  - "8010"     # consultoría de gestión y negocios
+  - "8011"     # recursos humanos / desarrollo de personas
   - "8610"     # formación profesional
-  - "8611"     # educación de adultos / sistemas alternativos
+  - "8611"     # educación de adultos
   - "8613"     # educación especializada (incluye formación en gestión)
-  - "801115"   # desarrollo de recursos humanos
 
 # Regiones donde pueden trabajar (vacío = todas). Ej.: ["metropolitana", "valparaiso"]
 regiones: []
